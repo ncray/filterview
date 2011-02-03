@@ -925,10 +925,10 @@
                     this._params = {
                         labels : this._distinctVals(this._datapts),
                         min : 0,
-                        max : this._params.labels.length-1,
                         range : "min",
                         value : this._params.min,
                     };
+                    this._params.max = this._params.labels.length - 1;
                 } else if (this._params.type == "integer") {
                     this._params = {
                         min : this._datapts[0],

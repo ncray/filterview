@@ -75,6 +75,43 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
         return $.extend({pts:pts}, opts);
     };
 
+    function loadAjaxData(data) {
+        var url, attrs = [];
+        for (var attr in data.pts) {
+            if (data.pts[attr] && (data.pts[attr].constructor.name == "RemoteData")) {
+                url || (url = data.pts[attr].url);
+                if (data.pts[attr].url == url) {
+                    attrs.push(attr);
+                }
+            }
+        }
+        if (url) {
+            $.ajax({
+                url: url,
+                dataType: "jsonp",
+                success: function (json) {
+                    attrs.forEach(function(attr) {
+                        data.pts[attr] = data.pts[attr].callback(json);
+                    });
+                    loadAjaxData(data);
+                },
+            });
+            return;
+        }
+        data.pts = data.pts.yy.map(function(yy, i) {
+            var pt = {
+                xx: (data.pts.xx ? data.pts.xx[i] : (i+1)),
+            };
+            for (var attr in data.pts) {
+                if (data.pts[attr]) {
+                    pt[attr] = data.pts[attr][i];
+                }
+            }
+            return pt;
+        });
+        svgplot.plot.loadData(data);
+    };
+
     return {
         attach : function () {
             $('#jsslave').removeClass('grid_16').addClass('grid_8');
@@ -121,6 +158,10 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
             }
             if (yy.constructor.name == "RemoteData") {
                 data = zipRemoteData(xx, yy, opts);
+                if (data.pts.yy.url) {
+                    loadAjaxData(data);
+                    return;
+                }
             } else {
                 data = zipLocalData(xx, yy, opts);
             }
