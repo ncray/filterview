@@ -340,9 +340,7 @@
         },
 
         _makePlot: function (queriedData) {
-            if (this._autorescale) {
-                this._isRemote ? this.resetAxes(queriedData) : this.resetAxes();
-            }
+            (!this._autorescale) || this.resetAxes(queriedData);
 	    this._drawChartBackground();
             var uuid = new Date().getTime();
 	    var dims = this._getDims();

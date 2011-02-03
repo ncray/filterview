@@ -46,14 +46,18 @@ body {
     position: absolute;
     background: white;
     display: none;
-    opacity: 0.95;
+    opacity: 0.96;
     border: 1px solid #CCC;
 }
 
 .listitems a {
+    text-transform: none;
+    text-decoration: none;
     font-size: 12px;
     line-height: 15px;
     height: 15px;
     width: 180px;
     display: block;
+    color: #111;
+    font-weight: bold;
 }
