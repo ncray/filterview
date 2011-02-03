@@ -1,0 +1,59 @@
+body {
+    position: absolute;
+    line-height: 1;
+    border-top: 0px none;
+    color: black;
+    background: white;
+    font-family: monospace;
+    font-size:100%;
+    width: 100%;
+}
+
+#container {
+    position: relative;
+    left: 0;
+    top: 0;
+    padding-top: 10px;
+}
+
+#info {
+    position: absolute;
+    left: 0;
+    width: 60%;
+}
+
+#plot {
+    position: absolute;
+    width: 45%;
+    padding-right:30px;
+    right: 0;
+}
+
+#toc {
+    padding-bottom: 30px;
+    position: relative;
+    height: 60px;
+}
+
+.menu {
+    font-family: 'Lucida Console', Monaco, monospace;
+    padding-left: 40px;
+    width: 120px;
+    float: left;
+}
+
+.listitems {
+    position: absolute;
+    background: white;
+    display: none;
+    opacity: 0.95;
+    border: 1px solid #CCC;
+}
+
+.listitems a {
+    font-size: 12px;
+    line-height: 15px;
+    height: 15px;
+    width: 180px;
+    display: block;
+}
