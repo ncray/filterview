@@ -1,0 +1,66 @@
+body {
+    line-height: 1;
+    border-top: 0px none;
+    color: black;
+    background: white;
+    font-family: monospace;
+    font-size:120%;
+}
+
+.container {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+
+.clear {
+    height: 0;
+    clear: both;
+}
+
+.left_half {
+    width: 40%;
+    float: left;
+    margin-left: 50px;
+}
+
+.right_half {
+    width: 50%;
+    float: right;
+}
+
+.command {
+    padding-bottom: 45px;
+}
+
+.checkbox_col {
+    margin-bottom: 30px;
+}
+
+h1 {
+    background: white;
+    font-size: 200%;
+    padding: 0.3% 0% 0% 0%;
+}
+
+.command h2 {
+    font-size: 25px;
+    padding-top: 40px;
+}
+
+.tooltip {
+    font-size: 18px;
+    margin: 4px;
+}
+
+#header {
+    width: 100%;
+    margin-left: 40px;
+    margin-bottom: 10px;
+}
+
+#header h2 {
+    font-size: 24px;
+    margin-top: 0;
+}
