@@ -1,4 +1,4 @@
-require(["order!../thirdparty/js/jquery-1.4.4.min.js",
+require(["order!thirdparty/js/jquery-1.4.4.min.js",
          "order!data/clusters.js",
          "order!jscliplot"], function (_, foo, jscliplot) {
              var fncalls = [

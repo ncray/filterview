@@ -28,5 +28,5 @@ require(["order!thirdparty/js/jquery-1.4.4.min.js",
              };
              $(".right").css("height", $(".right").css("width"));
              jscliplot.createSVGPlot("#svgslave", "#uislave");
-             jscliplot.plot(bieber.xx, bieber.yy, {lan: bieber.lan, letter: bieber.letter, xlab: "Words", ylab:"Num !", ui:{checkbox:"lan"}});
+             jscliplot.plot(bieber.xx, bieber.yy, {lan: bieber.lan, letter: bieber.letter, xlab: "Words", ylab:"Num !s", ui:{checkbox:"lan"}});
          });
