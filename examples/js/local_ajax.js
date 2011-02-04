@@ -17,7 +17,7 @@ require(["order!thirdparty/js/jquery-1.4.4.min.js",
                  }),
                  lan: new RemoteData("http://search.twitter.com/search.json?q=bieber&rpp=100", function (tweets) {
                      return tweets.results.map(function(tweet) {
-                         return tweet.iso_language_code;
+                         return (tweet.iso_language_code || "unknown");
                      });
                  }),
                  letter: new RemoteData("http://search.twitter.com/search.json?q=bieber&rpp=100", function (tweets) {

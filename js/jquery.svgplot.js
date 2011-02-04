@@ -246,7 +246,7 @@
 		} else {
 		    this._wrapper.text(this._plotCont, dims[this.X] - axis._titleOffset,
 				       dims[this.Y] + dims[this.H] / 2, axis._title,
-                                       $.extend({textAnchor : 'middle', rotate:"270"}, axis._titleFormat || {}));
+                                       $.extend({textAnchor : 'middle'}, axis._titleFormat || {}));
 		}
 	    }
 	},
@@ -410,11 +410,11 @@
 
         loadData: function (data) {
             this.clearData();
-            this._isRemote = ((data.pts.yy) && (data.pts.yy.constructor.name == "RemoteData"));
+            this._isRemote = !!data.remote;
             var uiFn = this._isRemote ? this._createRemoteUI : this._createLocalUI;
             this._autorescale = data.rescale;
-            this._datapts = this._isRemote ? null : data.pts;
-            this._queryelem = this._isRemote ? data.pts : {};
+            this._datapts = this._isRemote ? null : data.local;
+            this._queryelem = this._isRemote ? data.remote : {};
 
             (!data.xlab) || this.xAxis.title(data.xlab);
             (!data.ylab) || this.yAxis.title(data.ylab);
