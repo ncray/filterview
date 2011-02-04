@@ -1,5 +1,5 @@
 require(["order!thirdparty/js/jquery-1.4.4.min.js",
-         "order!data/clusters.js",
+         "order!examples/data/clusters.js",
          "order!jscliplot"], function (_, foo, jscliplot) {
              var fncalls = [
                  ["<p>If you only supply one parameter, just like in R, it makes this the value for y and makes the x coordinates simply the sequence of natural numbers.</p>",

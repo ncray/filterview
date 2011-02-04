@@ -1,1 +1,0 @@
-../thirdparty/require.js
