@@ -71,7 +71,7 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
         remote.xx = (xx && (xx.constructor.name == "RemoteData")) ? xx : null;
         remote.yy = yy;
         for (var attr in opts) {
-            if ((attr != "ui") && (attr != "cui") && (typeof opts[attr] == 'object')) {
+            if ((attr != "ui") && (attr != "cui") && (opts[attr].constructor.name == "RemoteData")) {
                 remote[attr] = opts[attr];
                 delete opts[attr];
             }

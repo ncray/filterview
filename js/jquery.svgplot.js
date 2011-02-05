@@ -22,6 +22,7 @@
         this._updating = false; // to stop an infinite loop during UI changes
         this._queryelem = {};
         this._type = "p";
+        this._postFns = [];
 
         /* Construct Axes */
         this._drawNow = false;
@@ -266,6 +267,7 @@
 
 	/* Plot datapoints. */
         _drawScatterPlot: function (filterData) {
+            this._datapointCont = this._wrapper.group(this._plot);
 	    var dims = this._getDims();
             var pointR = Math.min(dims[this.W], dims[this.H])/150;
             var x_attr = this._isRemote ? (this._queryelem.xx ? this._queryelem.xx.remote_attr : null) : "xx";
@@ -291,7 +293,7 @@
                     this._wrapper.line(this._plot, coords[0], coords[1], coords2[0], coords2[1], {strokeWidth: 1, stroke: "black"});
                 }
                 if (this._type.match(/^(p|b|o)$/)) {
-                    var c = this._wrapper.circle(this._plot, coords[0], coords[1], data.rad,
+                    var c = this._wrapper.circle(this._datapointCont, coords[0], coords[1], data.rad,
                                  {fill: data.col, stroke: "black", strokeWidth: 1});
                     this._showStatus(c, data);
                 }
@@ -367,6 +369,9 @@
 	    this._drawAxis(false);
 	    this._drawTitle();
             this._drawScatterPlot(queriedData);
+            this._postFns.forEach(function(fn) {
+                fn.call(this, queriedData);
+            }, this);
 	},
 
         clearData: function () {
@@ -389,7 +394,7 @@
             var bounds = datapts.reduce(function(prev, curr) {
                 return {
                     xx: [Math.min(prev.xx[0],curr.xx), Math.max(prev.xx[1], curr.xx)],
-                    yy: [Math.min(prev.yy[0],curr.yy), Math.max(prev.yy[1], curr.yy)],
+                    yy: [Mah.min(prev.yy[0],curr.yy), Math.max(prev.yy[1], curr.yy)],
                 };
             }, {xx: [Infinity, -Infinity], yy: [Infinity, -Infinity]});
 
@@ -432,6 +437,7 @@
             this._queryelem = this._isRemote ? data.remote : {};
             var uiFn = this._isRemote ? this._createRemoteUI : this._createLocalUI;
 
+            (!data.postFns) || (this._postFns = data.postFns);
             (!data.type) || (this._type = data.type);
             (!data.xlab) || this.xAxis.title(data.xlab);
             (!data.ylab) || this.yAxis.title(data.ylab);

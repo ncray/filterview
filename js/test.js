@@ -39,6 +39,35 @@ require(["order!thirdparty/js/jquery-1.4.4.min.js",
                  tt: new RemoteData("three_cluster", "tt"),
                  col: new RemoteData("three_cluster", "col"),
              };
+             var drawCLs = function (datapts) {
+                 var yys = datapts.map(function(pt) {return pt.yy});
+                 var xbar = (yys.reduce(function(prev, curr) {
+                     return prev+curr;
+                 })/(yys.length));
+                 var std = Math.pow(yys.map(function(x) {return Math.pow(x-xbar, 2)}).reduce(function(prev, curr) {
+                     return prev+curr;
+                 })/(yys.length - 1), 0.5);
+                 var xmin = this.xAxis._scale.min,
+                     xmax = this.xAxis._scale.max,
+                     lcl = xbar - 2*std,
+                     ucl = xbar + 2*std;
+
+                 [lcl, ucl].forEach(function(y) {
+                     var ptone = this._getCoords(xmin, y);
+                     var pttwo = this._getCoords(xmax, y);
+                     this._wrapper.line(this._plotCont, ptone[0], ptone[1], pttwo[0], pttwo[1], {stroke: "red", strokeWidth: 2});
+                 }, this);
+                 // Now highlight the ones outside the bands
+                 var svgpts = this._datapointCont.childNodes;
+                 var ucl_coord = this._getCoords(xmin, ucl)[1];
+                 var lcl_coord = this._getCoords(xmin, lcl)[1];
+                 for (var i = 0; i < svgpts.length; i++) {
+                     // its backwards since the origin is the upper left corner
+                     if ((svgpts[i].cy.baseVal.value < ucl_coord) || (svgpts[i].cy.baseVal.value > lcl_coord)) {
+                         svgpts[i].setAttribute("fill", "orange");
+                     }
+                 }
+             };
              var fncalls = {
                  'plot(foo.xx)': [foo.xx],
                  'plot(foo.xx, foo.yy)': [foo.xx, foo.yy],
@@ -51,6 +80,7 @@ require(["order!thirdparty/js/jquery-1.4.4.min.js",
                  'plot(foo.xx, foo.yy, {col: foo.col, ui:{regexp: "col"}})' : [foo.xx, foo.yy, {col: foo.col, ui:{regexp: "col"}}],
                  'plot(foo.xx, foo.yy, {col:foo.col, tt:foo.tt, ui:{checkbox:"col",slider:"tt"}})' : [foo.xx, foo.yy, {col:foo.col, tt:foo.tt, ui:{checkbox:"col",slider:"tt"}}],
                  'plot(foo.xx, foo.yy, {col: foo.col, tt:foo.tt, ui:{slider:"xx"}, cui:{autocomplete:"col"}})' : [foo.xx, foo.yy, {col: foo.col, tt:foo.tt, ui:{slider:"xx"}, cui:{autocomplete:"col"}}],
+                 'plot(foo.yy, {col: foo.col, type:"o", postFns:[drawCls], ui:{checkbox:"col"}})' : [foo.yy, {col:foo.col, type:"o", postFns: [drawCLs], ui:{checkbox:"col"}}],
              };
 
                     var svgtmpl = '<div id="${id}" class="right_half"></div>';
