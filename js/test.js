@@ -40,6 +40,7 @@ require(["order!thirdparty/js/jquery-1.4.4.min.js",
                  col: new RemoteData("three_cluster", "col"),
              };
              var drawCLs = function (datapts) {
+                 if (!datapts.length) return;
                  var yys = datapts.map(function(pt) {return pt.yy});
                  var xbar = (yys.reduce(function(prev, curr) {
                      return prev+curr;
