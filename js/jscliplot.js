@@ -68,7 +68,7 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
 
     function zipRemoteData(xx, yy, opts) {
         var remote = {};
-        remote.xx = (xx.constructor.name == "RemoteData") ? xx : null;
+        remote.xx = (xx && (xx.constructor.name == "RemoteData")) ? xx : null;
         remote.yy = yy;
         for (var attr in opts) {
             if ((attr != "ui") && (attr != "cui") && (typeof opts[attr] == 'object')) {
