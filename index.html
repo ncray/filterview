@@ -14,32 +14,58 @@
     <script data-main="index" src="js/require.js"></script>
   </head>
   <body>
+    <a href="http://github.com/counsyl/filterview"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
     <div id="container">
-      <div id="info">
-        <div id="toc">
-          <h1>FilterView</h1>
-          <div class="menu examples">
-            Examples
-            <div class="listitems">
-              <a href="local_json.html">Local JSON</a>
-              <a href="local_ajax.html">Local JSON via Ajax</a>
-            </div>
-          </div>
-          <div class="menu source">
-            Source
-          </div>
-          <div class="menu download">
-            Download
+    <div style="float:right;">
+      <a href="http://github.com/counsyl/filterview/zipball/master">
+        <img border="0" width="90" src="http://github.com/images/modules/download/zip.png"></a>
+      <a href="http://github.com/counsyl/filterview/tarball/master">
+        <img border="0" width="90" src="http://github.com/images/modules/download/tar.png"></a>
+    </div>
+
+    <h1><a href="http://github.com/counsyl/filterview" style="text-decoration:none;">FilterView</a>
+      <span class="small">by <a href="http://github.com/counsyl" style="text-decoration:none;">counsyl</a></span></h1>
+
+    <div id="info">
+      <div id="toc">
+        <div class="menu examples">
+          Examples
+          <div class="listitems">
+            <a href="local_json.html">Local JSON</a>
+            <a href="local_ajax.html">Local JSON via Ajax</a>
           </div>
         </div>
-        <div id="docs">
-          Text explaing FilterView here.
+        <div class="menu source">
+          Source
         </div>
       </div>
-      <div id="plot">
-        <div id="uicont"></div>
+      <div id="plot"><pre class="shell">plot(iris.petal_width, iris.sepal_width,{
+    col:iris.color,
+    ui:{
+        checkbox:"col",
+        slider:"yy"
+    }
+})</pre>
         <div id="svgcont"></div>
-        <h4 style="margin:0;">plot(iris.petal_width, iris.sepal_width,{<br/>&nbsp;&nbsp;&nbsp;&nbsp;col:iris.color,<br/>&nbsp;&nbsp;&nbsp;&nbsp;ui:{<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;checkbox:"col",<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;slider:"yy"</br>&nbsp;&nbsp;&nbsp;&nbsp;}<br/>})</h4>
+        <div id="uicont"></div>
+      </div>
+      <div id="docs">
+        <h2>Authors</h2>
+        <p>Balaji Srinivasan (balajis@counsyl.com)<br/>
+          Jackson Gorham (jacksongorham@gmail.com)<br/><br/></p>
+        <h2>Download</h2>
+        <p>
+          You can download this project in either
+          <a href="http://github.com/counsyl/filterview/zipball/master">zip</a> or
+          <a href="http://github.com/counsyl/filterview/tarball/master">tar</a> formats.
+        </p>
+        <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
+          by running:
+          <pre class="shell">$ git clone git://github.com/counsyl/filterview</pre>
+        </p>
+        <div class="footer">
+          get the source code on GitHub : <a href="http://github.com/counsyl/filterview">counsyl/filterview</a>
+        </div>
       </div>
     </div>
   </body>

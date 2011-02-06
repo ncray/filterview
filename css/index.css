@@ -1,44 +1,43 @@
 body {
-    position: absolute;
     line-height: 1;
-    border-top: 0px none;
-    color: black;
+    color: #000000;
     background: white;
-    font-family: monospace;
-    font-size:100%;
-    width: 100%;
+    font-family: "Helvetica,Arial,FreeSans";
 }
 
 #container {
     position: relative;
-    left: 0;
-    top: 0;
     padding-top: 10px;
+    width: 50%;
+    left: 25%;
+}
+
+h1 .small {
+    font-size: 50%;
 }
 
 #info {
+    padding-right: 50px;
+    width: 100%;
     position: absolute;
     left: 0;
-    width: 60%;
 }
 
 #plot {
-    position: absolute;
-    width: 45%;
-    padding-right:30px;
-    right: 0;
+    width: 80%;
+    margin: 20px;
 }
 
 #toc {
-    padding-bottom: 30px;
+    padding-bottom: 5px;
     position: relative;
-    height: 60px;
+    width: 100%;
 }
 
 .menu {
     font-family: 'Lucida Console', Monaco, monospace;
-    padding-left: 40px;
-    width: 120px;
+    padding-left: 125px;
+    width: 150px;
     float: left;
 }
 
@@ -60,4 +59,14 @@ body {
     display: block;
     color: #111;
     font-weight: bold;
+}
+
+.shell {
+    background: #000;
+    color: #FFF;
+    padding: 15px;
+}
+
+.footer {
+    margin-bottom: 40px;
 }
