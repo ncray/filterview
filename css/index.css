@@ -12,8 +12,12 @@ body {
     left: 25%;
 }
 
-h1 .small {
-    font-size: 50%;
+h1 a {
+    text-decoration: none;
+    font-family: Palatino, Arial, FreeSans;
+    font-weight: bold;
+    color: #2F2F4F;
+    font-size: 150%;
 }
 
 #info {
@@ -35,7 +39,7 @@ h1 .small {
 }
 
 .menu {
-    font-family: 'Lucida Console', Monaco, monospace;
+    font-family: Palatino, Arial, monospace;
     padding-left: 125px;
     width: 150px;
     float: left;
