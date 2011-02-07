@@ -54,17 +54,15 @@ require(["order!thirdparty/js/jquery-1.4.4.min.js",
                      ucl = xbar + 2*std;
 
                  [lcl, ucl].forEach(function(y) {
-                     var ptone = this._getCoords(xmin, y);
-                     var pttwo = this._getCoords(xmax, y);
+                     var ptone = this._getSVGCoords(xmin, y);
+                     var pttwo = this._getSVGCoords(xmax, y);
                      this._wrapper.line(this._plotCont, ptone[0], ptone[1], pttwo[0], pttwo[1], {stroke: "red", strokeWidth: 2});
                  }, this);
                  // Now highlight the ones outside the bands
                  var svgpts = this._datapointCont.childNodes;
-                 var ucl_coord = this._getCoords(xmin, ucl)[1];
-                 var lcl_coord = this._getCoords(xmin, lcl)[1];
                  for (var i = 0; i < svgpts.length; i++) {
-                     // its backwards since the origin is the upper left corner
-                     if ((svgpts[i].cy.baseVal.value < ucl_coord) || (svgpts[i].cy.baseVal.value > lcl_coord)) {
+                     var yco = this._getPlotCoords(null, this._getValue(svgpts[i],"cy"));
+                     if ((yco > ucl) || (yco < lcl)) {
                          svgpts[i].setAttribute("fill", "orange");
                      }
                  }

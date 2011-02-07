@@ -31,7 +31,7 @@
 	this.yAxis = new SVGPlotAxis(this); // The main y-axis
 	this.yAxis.title('Y', 40);
 	this._drawNow = true;
-    }
+    };
 
     $.extend(SVGPlot.prototype, {
 	/* Useful indexes. */
@@ -70,11 +70,28 @@
 		    dims[this.H] / (this.yAxis._scale.max - this.yAxis._scale.min)];
 	},
 
-        _getCoords: function(x, y) {
+        _getSVGCoords: function(x, y) {
+            if (arguments.length == 0) return;
             var dims = this._getDims();
             var scales = this._getScales();
-            return [(x - this.xAxis._scale.min) * scales[0] + dims[this.X],
-                    (this.yAxis._scale.max - y) * scales[1] + dims[this.Y]];
+            var xco = x ? (x - this.xAxis._scale.min) * scales[0] + dims[this.X] : null;
+            var yco = y ? (this.yAxis._scale.max - y) * scales[1] + dims[this.Y] : null;
+            if (xco && yco) {
+                return [xco, yco];
+            }
+            return (xco ? xco : yco);
+        },
+
+        _getPlotCoords: function(x, y) {
+            if (arguments.length == 0) return;
+            var dims = this._getDims();
+            var scales = this._getScales();
+            var xco = x ? ((x-dims[this.X])/scales[0] + this.xAxis._scale.min) : null;
+            var yco = y ? ((dims[this.Y]-y)/scales[1] + this.yAxis._scale.max) : null;
+            if (xco && yco) {
+                return [xco, yco];
+            }
+            return (xco ? xco : yco);
         },
 
 	/* Set or retrieve the main plotting area.
@@ -286,10 +303,10 @@
 
             filterData.forEach(function(pt, i) {
                 var data = getPoint(pt, i);
-                var coords = this._getCoords(data.xx, data.yy);
+                var coords = this._getSVGCoords(data.xx, data.yy);
                 if (this._type.match(/^(b|l|o)$/) && (i < filterData.length - 1)) {
                     var data2 = getPoint(filterData[i+1], i+1);
-                    var coords2 = this._getCoords(data2.xx, data2.yy);
+                    var coords2 = this._getSVGCoords(data2.xx, data2.yy);
                     this._wrapper.line(this._plot, coords[0], coords[1], coords2[0], coords2[1], {strokeWidth: 1, stroke: "black"});
                 }
                 if (this._type.match(/^(p|b|o)$/)) {
@@ -308,7 +325,7 @@
             var self = this;
             var html = $.tmpl(this._template, data);
             var dims = this._getDims();
-            $(elem).hover(function(e) {
+            $(elem).hover(function() {
                 var toolcont = self._wrapper.group(self._plot, {class_: "point-metadata"});
                 var pos = [self._getValue(elem, "cx"), self._getValue(elem, "cy"), dims[self.W]/5, dims[self.H]/8];
                 self._wrapper.rect(toolcont, pos[0], pos[1]-pos[3], pos[2], pos[3],
