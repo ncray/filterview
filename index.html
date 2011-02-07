@@ -37,13 +37,15 @@
             Source
           </div>
         </div>
-        <div id="plot"><pre class="shell">plot(iris.petal_width, iris.sepal_width,{
-            col:iris.color,
-            ui:{
-            checkbox:"col",
-            slider:"yy"
-            }
-            })</pre>
+        <div id="plot">
+<pre class="Rstyle"><span style="color:red;">// Basic FilterView plot command</span>
+plot(iris.petal_width, iris.sepal_width,{
+    col:iris.color,
+    ui:{
+        checkbox:"col",
+        slider:"yy"
+    }
+})</pre>
           <div id="svgcont"></div>
           <div id="uicont"></div>
         </div>
