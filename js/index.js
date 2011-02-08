@@ -1,11 +1,12 @@
 require(["order!thirdparty/js/jquery-1.4.4.min.js",
          "order!data/iris.js",
          "order!jscliplot"], function (_, iris, jscliplot) {
-            /* Set up menu buttons */
-             $(".examples").click(function(e) {
-                 var wasBlock = ($(this).children(":first").css("display") == "block");
-                 $(".listitems").css("display", "none");
-                 wasBlock || $(this).children(":first").css("display", "block");
+             $(".menu").click(function(e) {
+                 var drop = $(this).children(".dropdown");
+                 var wasBlock = (drop.css("display") == "block");
+                 $(".dropdown").css("display", "none");
+                 wasBlock || drop.css("display", "block");
+                 e.preventDefault();
              });
 
              /* Actually make the svg plot */

@@ -2,7 +2,44 @@ body {
     line-height: 1;
     color: #000000;
     background: white;
-    font-family: "Helvetica,Arial,FreeSans";
+    font-family: Palatino, Arial, monospace;
+}
+
+#toc {
+    position: fixed;
+    width: 25%;
+    left: 10px;
+    top: 0;
+    padding-top: 40px;
+}
+
+#toc a {
+    text-decoration: none;
+    display: block;
+    color: #111;
+    font-weight: bold;
+}
+
+#toc ul {
+    -webkit-padding-start: 20px;
+    list-style-type: none;
+}
+
+#toc .chapter {
+    padding-bottom: 15px;
+    color: #2F2F4F;
+    font-size: 20px;
+}
+
+.chapter .dropdown {
+    width: 170px;
+    position: absolute;
+    font-size: 16px;
+    display: none;
+    color: #000;
+    border: 1px solid #2f2f4f;
+    opacity: 0.96;
+    background: #bbccff;
 }
 
 #container {
@@ -14,7 +51,6 @@ body {
 
 h1 a {
     text-decoration: none;
-    font-family: Palatino, Arial, FreeSans;
     font-weight: bold;
     color: #2F2F4F;
     font-size: 150%;
@@ -32,41 +68,8 @@ h1 a {
     margin: 20px;
 }
 
-#toc {
-    padding-bottom: 5px;
-    position: relative;
-    width: 100%;
-}
-
 #uicont > div {
     padding-bottom: 10px;
-}
-
-.menu {
-    font-family: Palatino, Arial, monospace;
-    padding-left: 125px;
-    width: 150px;
-    float: left;
-}
-
-.listitems {
-    position: absolute;
-    background: white;
-    display: none;
-    opacity: 0.96;
-    border: 1px solid #CCC;
-}
-
-.listitems a {
-    text-transform: none;
-    text-decoration: none;
-    font-size: 12px;
-    line-height: 15px;
-    height: 15px;
-    width: 180px;
-    display: block;
-    color: #111;
-    font-weight: bold;
 }
 
 .shell {

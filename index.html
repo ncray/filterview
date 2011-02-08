@@ -14,6 +14,19 @@
     <script data-main="index" src="js/require.js"></script>
   </head>
   <body>
+    <div id="toc">
+      <h2>FilterView Docs</h2>
+      <ul>
+        <li class="chapter"><a href="syntax.html">Syntax</a></li>
+        <li class="chapter menu"><a href="#">Examples with Data</a>
+          <ul class="dropdown">
+            <li><a href="local_json.html">Local JSON</a></li>
+            <li><a href="local_ajax.html">Local JSON via Ajax</a></li>
+          </ul>
+        </li>
+        <li class="chapter">Source</li>
+      </ul>
+    </div>
     <a href="http://github.com/counsyl/filterview"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
     <div id="container">
       <div style="float:right;">
@@ -25,18 +38,6 @@
 
       <h1><a href="http://github.com/counsyl/filterview">FilterView</a></h1>
       <div id="info">
-        <div id="toc">
-          <div class="menu examples">
-            Examples
-            <div class="listitems">
-              <a href="local_json.html">Local JSON</a>
-              <a href="local_ajax.html">Local JSON via Ajax</a>
-            </div>
-          </div>
-          <div class="menu source">
-            Source
-          </div>
-        </div>
         <div id="plot">
 <pre class="Rstyle"><span style="color:red;">// Basic FilterView plot command</span>
 plot(iris.petal_width, iris.sepal_width,{
