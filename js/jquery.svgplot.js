@@ -12,16 +12,17 @@
 	this._plotCont = this._wrapper.svg(0, 0, 0, 0, {class_: 'svg-plot'}); // The main container for the plot
         this._slavecont = null;
 	this._title = {value: '', offset: 25, settings: {textAnchor: 'middle'}};
-        this._area = [0.10, 0.05, 0.95, 0.90]; // The chart area: left, top, right, bottom, > 1 in pixels, <= 1 as proportion
+        this._area = [0.15, 0.05, 0.95, 0.85]; // The chart area: left, top, right, bottom, > 1 in pixels, <= 1 as proportion
 	this._areaFormat = {fill: 'none', stroke: 'black'}; // The formatting for the plot area
 	this._gridlines = [{stroke: "lightgray"}, {stroke: "lightgray"}]; // The formatting of the x- and y-gridlines
         this._datapts = [];
-        this._pointR = 5;
         this._template = '<div class="tooltip"><p>x: ${xx}</p><p>y: ${yy}</p></div>';
         this._uis = [];
         this._autorescale = false;
         this._updating = false; // to stop an infinite loop during UI changes
         this._queryelem = {};
+        this._type = "p";
+        this._postFns = [];
 
         /* Construct Axes */
         this._drawNow = false;
@@ -30,7 +31,7 @@
 	this.yAxis = new SVGPlotAxis(this); // The main y-axis
 	this.yAxis.title('Y', 40);
 	this._drawNow = true;
-    }
+    };
 
     $.extend(SVGPlot.prototype, {
 	/* Useful indexes. */
@@ -68,6 +69,30 @@
 	    return [dims[this.W] / (this.xAxis._scale.max - this.xAxis._scale.min),
 		    dims[this.H] / (this.yAxis._scale.max - this.yAxis._scale.min)];
 	},
+
+        _getSVGCoords: function(x, y) {
+            if (arguments.length == 0) return;
+            var dims = this._getDims();
+            var scales = this._getScales();
+            var xco = x ? (x - this.xAxis._scale.min) * scales[0] + dims[this.X] : null;
+            var yco = y ? (this.yAxis._scale.max - y) * scales[1] + dims[this.Y] : null;
+            if (xco && yco) {
+                return [xco, yco];
+            }
+            return (xco ? xco : yco);
+        },
+
+        _getPlotCoords: function(x, y) {
+            if (arguments.length == 0) return;
+            var dims = this._getDims();
+            var scales = this._getScales();
+            var xco = x ? ((x-dims[this.X])/scales[0] + this.xAxis._scale.min) : null;
+            var yco = y ? ((dims[this.Y]-y)/scales[1] + this.yAxis._scale.max) : null;
+            if (xco && yco) {
+                return [xco, yco];
+            }
+            return (xco ? xco : yco);
+        },
 
 	/* Set or retrieve the main plotting area.
 	   @param  left    (number) > 1 is pixels, <= 1 is proportion of width or
@@ -258,27 +283,37 @@
 	},
 
 	/* Plot datapoints. */
-        _drawDataPoints: function (filterData) {
+        _drawScatterPlot: function (filterData) {
+            this._datapointCont = this._wrapper.group(this._plot);
 	    var dims = this._getDims();
-            var scales = this._getScales();
-            this._pointR = Math.min(dims[this.W], dims[this.H])/150;
-            var xx = this._isRemote ? (this._queryelem.xx ? this._queryelem.xx.remote_attr : null) : "xx";
-            var yy = this._isRemote ? this._queryelem.yy.remote_attr : "yy";
-            var col = (this._isRemote && this._queryelem.col) ? this._queryelem.col.remote_attr : "col";
-            var rad = (this._isRemote && this._queryelem.radius) ? this._queryelem.radius.remote_attr : "rad";
+            var pointR = Math.min(dims[this.W], dims[this.H])/150;
+            var x_attr = this._isRemote ? (this._queryelem.xx ? this._queryelem.xx.remote_attr : null) : "xx";
+            var y_attr = this._isRemote ? this._queryelem.yy.remote_attr : "yy";
+            var col_attr = (this._isRemote && this._queryelem.col) ? this._queryelem.col.remote_attr : "col";
+            var rad_attr = (this._isRemote && this._queryelem.radius) ? this._queryelem.radius.remote_attr : "rad";
+
+            var getPoint = function (pt, i) {
+                return {
+                    xx  : (pt[x_attr] || (i+1)),
+                    yy  : pt[y_attr],
+                    col : (pt[col_attr] || "black"),
+                    rad : (pt[rad_attr] || pointR),
+                };
+            };
 
             filterData.forEach(function(pt, i) {
-                var data = {
-                    xx  : (pt[xx] || (i+1)),
-                    yy  : pt[yy],
-                    col : (pt[col] || "black"),
-                    rad : (pt[rad] || this._pointR),
-                };
-                var cx = (data.xx - this.xAxis._scale.min) * scales[0] + dims[this.X];
-                var cy = (this.yAxis._scale.max - data.yy) * scales[1] + dims[this.Y];
-                var c = this._wrapper.circle(this._plot, cx, cy, data.rad,
-                             {fill: data.col, stroke: "black", strokeWidth: 1});
-                this._showStatus(c, data);
+                var data = getPoint(pt, i);
+                var coords = this._getSVGCoords(data.xx, data.yy);
+                if (this._type.match(/^(b|l|o)$/) && (i < filterData.length - 1)) {
+                    var data2 = getPoint(filterData[i+1], i+1);
+                    var coords2 = this._getSVGCoords(data2.xx, data2.yy);
+                    this._wrapper.line(this._plot, coords[0], coords[1], coords2[0], coords2[1], {strokeWidth: 1, stroke: "black"});
+                }
+                if (this._type.match(/^(p|b|o)$/)) {
+                    var c = this._wrapper.circle(this._datapointCont, coords[0], coords[1], data.rad,
+                                 {fill: data.col, stroke: "black", strokeWidth: 1});
+                    this._showStatus(c, data);
+                }
             }, this);
 	},
 
@@ -290,7 +325,7 @@
             var self = this;
             var html = $.tmpl(this._template, data);
             var dims = this._getDims();
-            $(elem).hover(function(e) {
+            $(elem).hover(function() {
                 var toolcont = self._wrapper.group(self._plot, {class_: "point-metadata"});
                 var pos = [self._getValue(elem, "cx"), self._getValue(elem, "cy"), dims[self.W]/5, dims[self.H]/8];
                 self._wrapper.rect(toolcont, pos[0], pos[1]-pos[3], pos[2], pos[3],
@@ -350,7 +385,10 @@
 	    this._drawAxis(true);
 	    this._drawAxis(false);
 	    this._drawTitle();
-            this._drawDataPoints(queriedData);
+            this._drawScatterPlot(queriedData);
+            this._postFns.forEach(function(fn) {
+                fn.call(this, queriedData);
+            }, this);
 	},
 
         clearData: function () {
@@ -411,11 +449,13 @@
         loadData: function (data) {
             this.clearData();
             this._isRemote = !!data.remote;
-            var uiFn = this._isRemote ? this._createRemoteUI : this._createLocalUI;
             this._autorescale = data.rescale;
             this._datapts = this._isRemote ? null : data.local;
             this._queryelem = this._isRemote ? data.remote : {};
+            var uiFn = this._isRemote ? this._createRemoteUI : this._createLocalUI;
 
+            (!data.postFns) || (this._postFns = data.postFns);
+            (!data.type) || (this._type = data.type);
             (!data.xlab) || this.xAxis.title(data.xlab);
             (!data.ylab) || this.yAxis.title(data.ylab);
             (!data.ui)   || uiFn.call(this, data.ui, false);
@@ -551,7 +591,6 @@
 	this._lineFormat = {stroke: 'black', strokeWidth: 1}; // Formatting settings for the axis lines
 	this._ticks = {major: major || 10, size: 15, position: 'ne'}; // Tick mark options
 	this._scale = {min: min || 0, max: max || 100}; // Axis scale settings
-	this._crossAt = 0; // Where this axis crosses the other one. */
         this._numTicks = 8;
     }
 
@@ -841,14 +880,18 @@
             },
             reset: function () {
                 var self = this;
+                var prev = (this._params.checked || {});
+                var tmpl = '<input type="checkbox" value="${lbl}" ${checked}><span>${lbl}</span></input>';
                 this._ui.children().remove();
                 this._params.checked = {};
                 UIMethods.checkbox.assignParams.call(this);
                 this._params.labels.forEach(function(lbl) {
-                    self._params.checked[lbl.toString()] = true;
-                    var box = $('<input type="checkbox" value="'+lbl+'" checked><span>'+lbl+'</span></input>').appendTo(self._ui);
-                    $(box).css({'font-size':'150%'}).change(function () {
-                        self._params.checked[lbl.toString()] = $(this).is(':checked');
+                    lbl = lbl.toString();
+                    var isChecked = (prev[lbl] !== undefined ? prev[lbl] : true);
+                    self._params.checked[lbl] = isChecked;
+                    var box = $.tmpl(tmpl, {lbl:lbl, checked: (isChecked ? "checked" : "")}).appendTo(self._ui);
+                    $(box).change(function () {
+                        self._params.checked[lbl] = $(this).is(':checked');
                         self._svgplot._UIChange();
                     });
                 });
