@@ -1,0 +1,185 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>FilterView</title>
+
+    <!-- CSS -->
+    <link media="screen" rel="stylesheet" href="thirdparty/development-bundle/themes/base/jquery.ui.all.css" type="text/css"/>
+    <link media="screen" rel="stylesheet" href="thirdparty/development-bundle/themes/ui-lightness/jquery.ui.all.css" type="text/css"/>
+    <link rel="stylesheet" href="css/syntax.css" type="text/css"/>
+
+    <!-- Require js import -->
+    <script data-main="js/syntax.js" src="js/require.js"></script>
+  </head>
+  <body>
+    <div id="toc">
+      <h2>FilterView Docs</h2>
+      <ul>
+        <li class="chapter"><a href="syntax.html">Syntax</a></li>
+        <li class="chapter menu"><a href="#">Examples with Data</a>
+          <ul class="dropdown">
+            <li><a href="local_json.html">Local JSON</a></li>
+            <li><a href="local_ajax.html">Local JSON via Ajax</a></li>
+          </ul>
+        </li>
+        <li class="chapter">Source</li>
+      </ul>
+    </div>
+    <div id="container">
+      <div id="intro">
+        <h1>FilterView Syntax</h1>
+        <p>The syntax for the plotting library of FilterView is meant to be
+        a generalization of the plotting syntax for R. Most of the
+        functionality from the R command plot has been transplanted into
+        this implementation, except for novel concept of the ui and cui elements.
+        </p>
+      </div>
+      <div id="docs">
+        <h2>Positional Arguments</h2>
+        <div>
+          <h3>Invocation with One Argument</h3>
+          <pre class="Rstyle">plot(foo.xx)</pre>
+          <p>If you only supply one parameter, just like in R, it makes this
+          the value for y and makes the x coordinates simply the sequence of
+          natural numbers. Internally, the x coordinate is given the label
+          "xx," which will be important when you want to attach a UI element
+          to this coordinate.</p>
+          <div class="show" num="0">Show</div>
+        </div>
+        <div>
+          <h3>Invocation with Two Arguments</h3>
+          <pre class="Rstyle">plot(foo.xx, foo.yy)</pre>
+          <p>When supplying two arguments, the plot simply makes a scatter
+          plot based on the two arrays of data fed to the command. Again,
+          the internal labels for the x and y coordinates here are 'xx' and
+          'yy'.</p>
+          <div class="show" num="1">Show</div>
+        </div>
+        <div>
+          <h3>Option: col</h3>
+          <pre class="Rstyle">plot(foo.xx, foo.yy, {col: foo.col})</pre>
+            <p>When you pass in a third argument, it is assumed to be an
+            object containing all objects. If you only supply two arguments
+            and the latter is an options object, the plot command will
+            assume you are simply supplying the y values and an option
+            object. </p>
+            <p> The argument 'col' is hardcoded to stand for the color of a
+            datapoint. It
+            can be either the name of a color (e.g. red) or the rgb code. By
+            passing in an array with the same size as the xx and yy array, the
+            data will be bundled pointwise with all points.</p>
+          <div class="show" num="2">Show</div>
+        </div>
+        <div>
+          <h2>UI Elements</h2>
+          <p> In order to automatically generate UI elements, you need to
+          declare these in the options object. To do this, you simply
+          include a key by the name of 'ui' in the options object with the
+          value being another object specifying the exact UI elements. </p>
+          <p> Currently, the UI element types being supported are:
+            <ul>
+              <li>Slider elements = "slider" </li>
+              <li>Checkbox elements = "checkbox" </li>
+              <li>Autocomplete elements = "autocomplete" </li>
+              <li>Dropdown/Selector elements = "dropdown" </li>
+              <li>Regexp elements = "regexp"</li>
+            </ul>
+          </p>
+          <p>One very important facet of these UI elements is that they
+          introspect on the datatype in order to accurately provide
+          meaningful user selections. For instance, if a slider element is
+          created for a continuous variable, it would be meaningless to
+          create a slider that only had one handle which selected datapoints
+          which precisely matched the value the handle was located
+          on. Instead, we automatically create two-handled slider, which
+          lets the user bound the range of datapoints on that attribute.</p>
+        </div>
+        <div>
+          <h3>Using One UI element - the Slider</h3>
+          <pre class="Rstyle">plot(foo.xx, foo.yy, {
+    col:foo.col, bar:foo.tt,
+    ui:{
+        slider:"bar"
+    }
+})</pre>
+           <p>To declare a UI element, you just use the type of the UI and attribute
+           you want to index on. Here 'tt' is just a randomly chosen integer from
+           1,2, or 3. Notice that to declare the slider for tt, we use the name we
+           assign it in the function call, and not its native attribute in the foo
+           object. That is, in this example, notice we use 'bar' instead of 'tt' to
+           generate a slider object for the tt attribute. </p>
+          <div class="show" num="3">Show</div>
+        </div>
+        <div>
+          <h3>Using Multiple UI elements</h3>
+          <pre class="Rstyle">plot(foo.xx, foo.yy, {
+    col:foo.col, tt:foo.tt,
+    ui:{
+        checkbox:"tt"
+        autocomplete:"col",
+    }
+})</pre>
+          <p>To introduce multiple ui elements, simply include them all in
+          the ui object.</p>
+          <div class="show" num="4">Show</div>
+        </div>
+        <div>
+          <h3>Multiple Instance of Same UI Type</h3>
+          <pre class="Rstyle">plot(foo.xx, foo.yy, {
+    col:foo.col,
+    ui:{
+        slider:["xx","yy"]
+    }
+}))</pre>
+         <p>Mixing UI elements is easy. If they are different types, simply
+         include them all inthe ui object. If they are the same type, then
+         place them in an array, as in this example. Notice if you specify a
+         slider for a continuous variable, then it automatically assumes you
+         want the range of that attribute.</p>
+          <div class="show" num="5">Show</div>
+        </div>
+        <div>
+          <h3>Automatic Rescaling</h3>
+          <pre class="Rstyle">plot(foo.xx, foo.yy, {
+    col:foo.col, rescale:true,
+    ui:{
+        regexp:"col"
+    }
+})</pre>
+          <p>Sometimes its preferrable to have the axis automatically
+          rescale when an UI change is made. This can be done by including
+          the rescale argument in the options.</p>
+          <div class="show" num="6">Show</div>
+        </div>
+        <div>
+          <h2>Child UI elements (cui)</h2>
+          <p>Sometimes we might want the domain of possibilities which a UI
+          element can select upon to update as other UI elements change. For
+          example, if we adjust the range of permissible datapoints so that
+          no red points are shown any longer, we may want our color selector
+          to stop including that as a possible choice. This can all be
+          accomplished by making it a child UI. A cui element behaves
+          exactly like a normal UI element, except after each UI change, it
+          updates its domain to select only elements that can possibly be
+          selected.</p>
+        </div>
+        <div>
+          <h3>A cui example</h3>
+          <pre class="Rstyle">plot(foo.xx, foo.yy, {
+    col:foo.col,
+    ui:{slider:"xx"},
+    cui:{checkbox:"col"}
+})</pre>
+          <p>In this example, we see that we get both a slider and
+          checkbox as selectors. However, notice that if the range of the
+          slider filters out all elements from say the 'red' cluster, then
+          it ceases to be an option to select as a checkbox. Once the slider
+          is readjusted to accept some red datapoints again, it reappears.
+          <div class="show" num="7">Show</div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
