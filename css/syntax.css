@@ -1,61 +1,3 @@
-body {
-    line-height: 1;
-    color: #000000;
-    background: white;
-    font-family: Palatino, Arial, monospace;
-}
-
-#toc {
-    position: fixed;
-    width: 25%;
-    left: 10px;
-    top: 0;
-    padding-top: 40px;
-}
-
-#toc a {
-    text-decoration: none;
-    display: block;
-    color: #111;
-    font-weight: bold;
-}
-
-#toc ul {
-    -webkit-padding-start: 20px;
-    list-style-type: none;
-}
-
-#toc .chapter {
-    padding-bottom: 15px;
-    color: #2F2F4F;
-    font-size: 20px;
-}
-
-.chapter .dropdown {
-    width: 170px;
-    position: absolute;
-    font-size: 16px;
-    display: none;
-    color: #000;
-    border: 1px solid #2f2f4f;
-    opacity: 0.96;
-    background: #bbccff;
-}
-
-#container {
-    position: relative;
-    padding-top: 10px;
-    width: 50%;
-    left: 25%;
-}
-
-.Rstyle {
-    border: 3px solid #BBCCFF;
-    color: #000;
-    padding: 10px;
-    width: auto;
-}
-
 .left_half {
     float: left;
     width: 45%;
@@ -75,15 +17,6 @@ body {
     padding: 2px;
 }
 
-.clear {
-    height: 0;
-    clear: both;
-}
-
 .point-metadata {
     font-size: 8px;
-}
-
-.footer {
-    padding-bottom: 30px;
 }

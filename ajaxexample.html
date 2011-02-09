@@ -8,22 +8,102 @@
     <!-- CSS -->
     <link media="screen" rel="stylesheet" href="thirdparty/development-bundle/themes/base/jquery.ui.all.css" type="text/css"/>
     <link media="screen" rel="stylesheet" href="thirdparty/development-bundle/themes/ui-lightness/jquery.ui.all.css" type="text/css"/>
+    <link rel="stylesheet" href="css/toc.css" type="text/css"/>
     <link rel="stylesheet" href="css/ajaxexample.css" type="text/css"/>
 
     <!-- Require js import -->
     <script data-main="js/ajaxexample.js" src="js/require.js"></script>
   </head>
   <body>
+    <div id="toc">
+      <h2>FilterView Docs</h2>
+      <ul>
+        <li class="chapter"><a href="syntax.html">Syntax</a></li>
+        <li class="chapter menu"><a href="#">Examples with Data</a>
+          <ul class="dropdown">
+            <li><a href="ajaxexample.html">Locally Stored</a></li>
+            <li><a href="jsonpexample.html">Via JSONP</a></li>
+          </ul>
+        </li>
+        <li class="chapter">Source</li>
+      </ul>
+    </div>
     <div id="container">
       <div id="intro">
-        <h2>Local JSON example</h2>
-        <p>In this set of examples, we are simply import a json object
-        from a script tag. This data is stored as the variable 'foo' in
-        the browser. Below is the actual content of foo.</p>
-        <div class="jsoncode">
-        </div>
+        <h1>Storing Data Locally</h1>
+        <p>When plotting your data, there are two very frequent instances:
+        (1) your data is a json object assigned to some variable in the
+        browser's environment or (2) your data is stored as a .json file on
+        a server but is small enough to load entirely into the browser. In
+        either of these cases, all that must be done is load all the
+        relevant data into an object to be passed to the plotting
+        library.</p>
+        <p>The json object should be in the following form in order to
+        leverage the syntax of the current plot command:</p>
+        <pre class="Rstyle"><code>var foo = {
+    xx: [< list of numbers >],
+    yy: [< list of numbers >],
+    col: [< list of colors >],
+    ...
+    xlab: "weight",
+    ...
+};</code></pre>
+        <p>Of course as explaining the Syntax section, you need not specify
+        an xx if you want it to be set to the positive integers as a
+        default. Note that any attribute in the object that is an array with
+        the same length as the yy array will be zipped up into points to be
+        plotted later. This means if you want to create a UI object that
+        selects on some attribute, you need to guarantee that is the same
+        length as the array containing your datapoints.</p>
       </div>
+      <div>
+        <h2>Example with Ajax</h2>
+        <p>As mentioned earlier, as long as the data is stored locally in
+        the form above, it doesn't matter whether the data has been created
+        in the browser or was retrieved from an ajax call. Below we
+        illustrate an example with data retrieved from an ajax call as a
+        reference.</p>
+        <p>Currently we use the require.js module to organize the importing
+        of js modules. Thus in the head of this page, we have a script tag
+        of the form:</p>
+        <pre class="Rstyle">< script data-main="js/ajaxexample.js" src="js/require.js"></ script></pre>
+        <p>Here the script that will be calling FilterView is
+        js/ajaxexample.js. Lets also assume that your data is stored in
+        data/clusters.js. Then at the beginning of ajaxexample.js, we would
+        have the following imports:</p>
+        <pre class="Rstyle"><code>require(["order!thirdparty/js/jquery-1.4.4.min.js",
+         "order!data/clusters.js",
+         "order!jscliplot"], function (_, foo, jscliplot) {</code></pre>
+        <p>Notice here that all require.js is doing here is making an ajax
+        call to the path data/clusters.js, which is return a json object of
+        data of the form outlined above. It is then assigning this to the
+        variable foo in the callback function. If you already had foo stored
+        in the browser (from its own ajax call or whatever), then that's
+        great. This is just a way to load the jscliplot library and data at
+        the same time.</p>
+        <p> To be explicit, below exactly what is contained in the object
+        referenced by the variable name foo:</p>
+        <pre class="jsoncode Rstyle"></pre>
+        <p>The jscliplot object here contains two key methods. Before
+        plotting, you must attach the svgplot and its UI elements to some
+        div elements. To do this, the command is simply
+        <pre class="Rstyle">jscliplot.createSVGPlot(< svgslave id >, < uislave id >);</pre>
+        <p>Notice these must be ids. Once your plot has been attached, then
+        you can simply invoke the plot command as described in the Syntax
+        section:</p>
+        <pre class="Rstyle">jscliplot.plot(foo.xx, foo.yy, {
+    col: foo.col,
+    group: foo.tt,
+    ui: {
+        checkbox: "col",
+        slider: "group",
+    }
+})</pre>
+      </div>
+      <div id="svgdiv"></div>
+      <div id="uidiv"></div>
       <div class="clear"/>
+      <div class="footer"/>
     </div>
   </body>
 </html>
