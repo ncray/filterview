@@ -28,25 +28,26 @@
         <div>
           <h3>Invocation with One Argument</h3>
           <pre class="Rstyle">plot(foo.xx)</pre>
+          <div class="show" num="0">Show</div>
           <p>If you only supply one parameter, just like in R, it makes this
           the value for y and makes the x coordinates simply the sequence of
           natural numbers. Internally, the x coordinate is given the label
           "xx," which will be important when you want to attach a UI element
           to this coordinate.</p>
-          <div class="show" num="0">Show</div>
         </div>
         <div>
           <h3>Invocation with Two Arguments</h3>
           <pre class="Rstyle">plot(foo.xx, foo.yy)</pre>
+          <div class="show" num="1">Show</div>
           <p>When supplying two arguments, the plot simply makes a scatter
           plot based on the two arrays of data fed to the command. Again,
           the internal labels for the x and y coordinates here are 'xx' and
           'yy'.</p>
-          <div class="show" num="1">Show</div>
         </div>
         <div>
           <h3>Option: col</h3>
           <pre class="Rstyle">plot(foo.xx, foo.yy, {col: foo.col})</pre>
+          <div class="show" num="2">Show</div>
             <p>When you pass in a third argument, it is assumed to be an
             object containing all objects. If you only supply two arguments
             and the latter is an options object, the plot command will
@@ -57,7 +58,6 @@
             can be either the name of a color (e.g. red) or the rgb code. By
             passing in an array with the same size as the xx and yy array, the
             data will be bundled pointwise with all points.</p>
-          <div class="show" num="2">Show</div>
         </div>
         <div>
           <h2>UI Elements</h2>
@@ -91,13 +91,13 @@
         slider:"bar"
     }
 })</pre>
+          <div class="show" num="3">Show</div>
            <p>To declare a UI element, you just use the type of the UI and attribute
            you want to index on. Here 'tt' is just a randomly chosen integer from
            1,2, or 3. Notice that to declare the slider for tt, we use the name we
            assign it in the function call, and not its native attribute in the foo
            object. That is, in this example, notice we use 'bar' instead of 'tt' to
            generate a slider object for the tt attribute. </p>
-          <div class="show" num="3">Show</div>
         </div>
         <div>
           <h3>Using Multiple UI elements</h3>
@@ -108,9 +108,9 @@
         autocomplete:"col",
     }
 })</pre>
+          <div class="show" num="4">Show</div>
           <p>To introduce multiple ui elements, simply include them all in
           the ui object.</p>
-          <div class="show" num="4">Show</div>
         </div>
         <div>
           <h3>Multiple Instance of Same UI Type</h3>
@@ -120,12 +120,12 @@
         slider:["xx","yy"]
     }
 }))</pre>
+         <div class="show" num="5">Show</div>
          <p>Mixing UI elements is easy. If they are different types, simply
          include them all inthe ui object. If they are the same type, then
          place them in an array, as in this example. Notice if you specify a
          slider for a continuous variable, then it automatically assumes you
          want the range of that attribute.</p>
-          <div class="show" num="5">Show</div>
         </div>
         <div>
           <h3>Automatic Rescaling</h3>
@@ -135,10 +135,10 @@
         regexp:"col"
     }
 })</pre>
+          <div class="show" num="6">Show</div>
           <p>Sometimes its preferrable to have the axis automatically
           rescale when an UI change is made. This can be done by including
           the rescale argument in the options.</p>
-          <div class="show" num="6">Show</div>
         </div>
         <div>
           <h2>Child UI elements (cui)</h2>
@@ -159,12 +159,12 @@
     ui:{slider:"xx"},
     cui:{checkbox:"col"}
 })</pre>
+          <div class="show" num="7">Show</div>
           <p>In this example, we see that we get both a slider and
           checkbox as selectors. However, notice that if the range of the
           slider filters out all elements from say the 'red' cluster, then
           it ceases to be an option to select as a checkbox. Once the slider
           is readjusted to accept some red datapoints again, it reappears.
-          <div class="show" num="7">Show</div>
         </div>
       </div>
       <div class="footer"/>
