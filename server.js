@@ -17,12 +17,14 @@ var homefile   = "./test.html",
 // Connecting to MongoDB //
 ///////////////////////////
 
-var dbhost = "localhost",
+var dbname = "foo",
+    dbhost = "localhost",
     dbport = 27018;
 
-console.log('Connecting to db at http://%s:%s/', dbhost, dbport);
-var db = new Db("foo", new Server(dbhost, dbport, {}));
+console.log('Connecting to db %s at http://%s:%s/', dbname, dbhost, dbport);
+var db = new Db(dbname, new Server(dbhost, dbport, {}));
 db.open(function (err, db) {});
+console.log("Connected.");
 
 //////////////////////
 // Helper Functions //
