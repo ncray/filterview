@@ -74,8 +74,8 @@
             if (arguments.length == 0) return;
             var dims = this._getDims();
             var scales = this._getScales();
-            var xco = x ? (x - this.xAxis._scale.min) * scales[0] + dims[this.X] : null;
-            var yco = y ? (this.yAxis._scale.max - y) * scales[1] + dims[this.Y] : null;
+            var xco = (x !== undefined && x !== null) ? (x - this.xAxis._scale.min) * scales[0] + dims[this.X] : null;
+            var yco = (y !== undefined && y !== null) ? (this.yAxis._scale.max - y) * scales[1] + dims[this.Y] : null;
             if (xco && yco) {
                 return [xco, yco];
             }
@@ -86,8 +86,8 @@
             if (arguments.length == 0) return;
             var dims = this._getDims();
             var scales = this._getScales();
-            var xco = x ? ((x-dims[this.X])/scales[0] + this.xAxis._scale.min) : null;
-            var yco = y ? ((dims[this.Y]-y)/scales[1] + this.yAxis._scale.max) : null;
+            var xco = (x !== undefined && x !== null) ? ((x-dims[this.X])/scales[0] + this.xAxis._scale.min) : null;
+            var yco = (y !== undefined && y !== null) ? ((dims[this.Y]-y)/scales[1] + this.yAxis._scale.max) : null;
             if (xco && yco) {
                 return [xco, yco];
             }

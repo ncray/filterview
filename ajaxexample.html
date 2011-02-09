@@ -73,7 +73,9 @@
         have the following imports:</p>
         <pre class="Rstyle"><code>require(["order!thirdparty/js/jquery-1.4.4.min.js",
          "order!data/clusters.js",
-         "order!jscliplot"], function (_, foo, jscliplot) {</code></pre>
+         "order!jscliplot"], function (_, foo, jscliplot) {
+         ...
+})</code></pre>
         <p>Notice here that all require.js is doing here is making an ajax
         call to the path data/clusters.js, which is return a json object of
         data of the form outlined above. It is then assigning this to the

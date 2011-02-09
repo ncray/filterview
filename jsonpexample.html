@@ -8,18 +8,124 @@
     <!-- CSS -->
     <link media="screen" rel="stylesheet" href="thirdparty/development-bundle/themes/base/jquery.ui.all.css" type="text/css"/>
     <link media="screen" rel="stylesheet" href="thirdparty/development-bundle/themes/ui-lightness/jquery.ui.all.css" type="text/css"/>
+    <link rel="stylesheet" href="css/toc.css" type="text/css"/>
     <link rel="stylesheet" href="css/jsonpexample.css" type="text/css"/>
 
     <!-- Require js import -->
     <script data-main="js/jsonpexample.js" src="js/require.js"></script>
   </head>
   <body>
-    <h2>Retrieving Data from an Ajax Call</h2>
-    <div id="container">
-      <div id="uislave" class="left half">
-      </div>
-      <div id="svgslave" class="right half">
-      </div>
+    <div id="toc">
+      <h2>FilterView Docs</h2>
+      <ul>
+        <li class="chapter"><a href="syntax.html">Syntax</a></li>
+        <li class="chapter menu"><a href="#">Examples with Data</a>
+          <ul class="dropdown">
+            <li><a href="ajaxexample.html">Locally Stored</a></li>
+            <li><a href="jsonpexample.html">Via JSONP</a></li>
+          </ul>
+        </li>
+        <li class="chapter">Source</li>
+      </ul>
     </div>
+    <div id="container">
+      <div id="intro">
+        <h1>Retrieving Data with jsonp</h1>
+        <p>Sometimes your data may be located in a domain that is not on
+        your own server. In this case, you can utilize jsonp to load and
+        visualize your data.</p>
+        <p>FilterView currently supports two types of remote data: data that
+        is available via a jsonp request, and data that is stored in a
+        database on the server. In the latter case, this is great for
+        situations where your data cannot fit altogether in the browser, and
+        thus must be pulled in based on the desired queries. The power here
+        is great, and is also the big reason we call this technology
+        FilterView. The data can be distributed or sharded over any network,
+        but as long as the server has a client for querying and accessing
+        this data, it can be entirely visualized in the browser. Currently,
+        the only database that is supported is MongoDB, but more will be
+        available soon.</p>
+        <p>Here we will show how to set up an example with jsonp. First, in
+        the js file that is initialized by require.js, make sure your code
+        is wrapped with the code:</p>
+        <pre class="Rstyle"><code>require(["order!thirdparty/js/jquery-1.4.4.min.js",
+         "order!jscliplot"], function (_, jscliplot) {
+         ...
+})</code></pre>
+        <p>We currently demarcate both examples of remote data (jsonp and in
+        a database) by bundling the appropriate metadata in a RemoteData
+        object. Specifically, the constructor for this object is given by:
+<pre style="Rstyle"><code>function RemoteData(url, callback) {
+    this.url = url;
+    this.callback = callback;
+};</code></pre>
+        <p>Note that both jsonp and database remote sources use an object by
+        the name of RemoteData to tell FilterView the data source is
+        remote. To distinguish between these two examples, FilterView looks
+        for a url attribute; if it finds one, it knows it is jsonp. To see
+        what the contents of a database example looks like, check out that
+        example. The callback is there so that if the data you are trying to
+        import is not in the form of an array, you have a callback function
+        that will be executed before passed the data into FilterView.</p>
+        <p>At the moment, while you can mix local data and jsonp data, we
+        are not allowing any other combination of data sources in the same
+        plot. This will be expanded soon.</p>
+      </div>
+      <div>
+        <h2>A Twitter example</h2>
+        <p> Using the above logic, let us create a small example with
+        Twitter. Using the Twitter API, we create a bieber object as
+        follows:</p>
+<pre class="Rstyle"><code>var bieber = {
+    xx: new RemoteData("http://search.twitter.com/search.json?q=bieber&rpp=100",
+        function (tweets) {
+            return tweets.results.map(function(tweet) {
+                return tweet.text.split(' ').
+                    filter(function(xx) {return (xx.length > 0)}).length;
+            });
+        }),
+    yy: new RemoteData("http://search.twitter.com/search.json?q=bieber&rpp=100",
+         function (tweets) {
+             return tweets.results.map(function(tweet) {
+                 return (tweet.text.split('!').length - 1);
+             });
+        }),
+    lan: new RemoteData("http://search.twitter.com/search.json?q=bieber&rpp=100",
+         function (tweets) {
+             return tweets.results.map(function(tweet) {
+                 return (tweet.iso_language_code || "unknown");
+             });
+        }),
+    text: new RemoteData("http://search.twitter.com/search.json?q=bieber&rpp=100",
+         function (tweets) {
+             return tweets.results.map(function(tweet) {
+                 return tweet.text;
+             });
+         }),
+};</code></pre>
+      <p>Now after creating this object, we can simply pass it to FilterView
+      as in the case with locally stored data. FilterView will make the
+      jsonp request and callback on your behalf. Just make sure you don't
+      forget to initialize the svgplot to some div's id.</p>
+      <pre class="Rstyle"><code>jscliplot.createSVGPlot("#svgslave","#uislave");
+jscliplot.template('< div class="tweet">< p>Words:${xx}
+                    < br/>Exclaimations:${yy}< /p>< /div>');
+jscliplot.plot(bieber.xx, bieber.yy,{
+    lan: bieber.lan,
+    text: bieber.text,
+    xlab: "Words",
+    ylab: "Num !'s",
+    ui:{
+        dropdown:"lan"
+    }
+});</code></pre>
+      </div>
+      <div id="bieber">
+        <div id="svgslave" />
+      </div>
+      <h3>Language of Tweets</h3>
+      <div id="uislave" />
+    </div>
+    <div class="footer"/>
   </body>
 </html>

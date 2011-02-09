@@ -155,5 +155,8 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
             svgplot = $(svg_id).svg('get');
             svgplot.plot._slavecont = ui_id;
         },
+        template: function(temp) {
+            svgplot.plot.template(temp);
+        },
     };
 });
