@@ -12,7 +12,7 @@
 	this._plotCont = this._wrapper.svg(0, 0, 0, 0, {class_: 'svg-plot'}); // The main container for the plot
         this._slavecont = null;
 	this._title = {value: '', offset: 25, settings: {textAnchor: 'middle'}};
-        this._area = [0.10, 0.05, 0.95, 0.90]; // The chart area: left, top, right, bottom, > 1 in pixels, <= 1 as proportion
+        this._area = [0.15, 0.05, 0.95, 0.85]; // The chart area: left, top, right, bottom, > 1 in pixels, <= 1 as proportion
 	this._areaFormat = {fill: 'none', stroke: 'black'}; // The formatting for the plot area
 	this._gridlines = [{stroke: "lightgray"}, {stroke: "lightgray"}]; // The formatting of the x- and y-gridlines
         this._datapts = [];
@@ -411,7 +411,7 @@
             var bounds = datapts.reduce(function(prev, curr) {
                 return {
                     xx: [Math.min(prev.xx[0],curr.xx), Math.max(prev.xx[1], curr.xx)],
-                    yy: [Mah.min(prev.yy[0],curr.yy), Math.max(prev.yy[1], curr.yy)],
+                    yy: [Math.min(prev.yy[0],curr.yy), Math.max(prev.yy[1], curr.yy)],
                 };
             }, {xx: [Infinity, -Infinity], yy: [Infinity, -Infinity]});
 
@@ -880,14 +880,18 @@
             },
             reset: function () {
                 var self = this;
+                var prev = (this._params.checked || {});
+                var tmpl = '<input type="checkbox" value="${lbl}" ${checked}><span>${lbl}</span></input>';
                 this._ui.children().remove();
                 this._params.checked = {};
                 UIMethods.checkbox.assignParams.call(this);
                 this._params.labels.forEach(function(lbl) {
-                    self._params.checked[lbl.toString()] = true;
-                    var box = $('<input type="checkbox" value="'+lbl+'" checked><span>'+lbl+'</span></input>').appendTo(self._ui);
-                    $(box).css({'font-size':'150%'}).change(function () {
-                        self._params.checked[lbl.toString()] = $(this).is(':checked');
+                    lbl = lbl.toString();
+                    var isChecked = (prev[lbl] !== undefined ? prev[lbl] : true);
+                    self._params.checked[lbl] = isChecked;
+                    var box = $.tmpl(tmpl, {lbl:lbl, checked: (isChecked ? "checked" : "")}).appendTo(self._ui);
+                    $(box).change(function () {
+                        self._params.checked[lbl] = $(this).is(':checked');
                         self._svgplot._UIChange();
                     });
                 });
