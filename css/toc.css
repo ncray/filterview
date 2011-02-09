@@ -39,7 +39,11 @@ body {
     color: #000;
     border: 1px solid #2f2f4f;
     opacity: 0.96;
-    background: #bbccff;
+    background: #eeeeee;
+}
+
+.dropdown li {
+    padding-top: 10px;
 }
 
 #container {
