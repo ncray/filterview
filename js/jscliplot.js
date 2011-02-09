@@ -24,7 +24,6 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
 
     function zipParams (xx, yy, opts) {
         var hasAjax = false;
-        opts || (opts = {});
         if ((yy.constructor.name == "RemoteData") && (!yy.url)) {
             return zipRemoteData(xx, yy, opts);
         }
@@ -111,31 +110,35 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
 
     return {
         plot: function () {
-            var xx, yy, opts, data;
-            switch (arguments.length) {
+            var xx, yy, opts, data, args = Array.prototype.slice.call(arguments);
+            switch (args.length) {
                 case 0:
                     return;
                 case 1:
-                    yy = arguments[0];
+                    yy = args[0];
                     break;
                 case 2:
-                    if (arguments[1].constructor == Object) {
-                        yy = arguments[0];
-                        opts = arguments[1];
+                    if (args[1].constructor == Object) {
+                        yy = args[0];
+                        opts = args[1];
                     } else {
-                        xx = arguments[0];
-                        yy = arguments[1];
+                        xx = args[0];
+                        yy = args[1];
                     }
                     break;
             case 3:
-                xx = arguments[0];
-                yy = arguments[1];
-                opts = arguments[2];
+                xx = args[0];
+                yy = args[1];
+                opts = args[2];
                 break;
             }
+
             // If any args are strings, try to parse them
             xx = evalArg(xx);
             yy = evalArg(yy);
+            opts || (opts = {});
+            // This is crucial - otherwise we destroy the original.
+            opts = $.extend(true, {}, opts);
             for (var opt in opts) {
                 opts[opt] = evalArg(opts[opt]);
             }

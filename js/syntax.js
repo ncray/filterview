@@ -30,6 +30,7 @@ require(["order!thirdparty/js/jquery-1.4.4.min.js",
                      jscliplot.plot.apply(jscliplot, fncalls[num]);
                  } else {
                      $(this).text("Show");
+                     $('#'+ids.svgid).svg("destroy");
                      $("#"+ids.contid).remove();
                      $(this).parent().removeClass("left_half")
                             .next(".clear").remove();
