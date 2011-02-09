@@ -1,0 +1,61 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>FilterView</title>
+
+    <!-- CSS -->
+    <link media="screen" rel="stylesheet" href="thirdparty/development-bundle/themes/base/jquery.ui.all.css" type="text/css"/>
+    <link media="screen" rel="stylesheet" href="thirdparty/development-bundle/themes/ui-lightness/jquery.ui.all.css" type="text/css"/>
+    <link rel="stylesheet" href="css/toc.css" type="text/css"/>
+
+    <!-- Require js import -->
+    <script data-main="mongoexample" src="js/require.js"></script>
+  </head>
+  <body>
+    <div id="container">
+      <div id= "intro">
+        <h1>Walk Through a MongoDB Example</h1>
+        <p>FilterView can also be used to display data that is stored in a
+        database. Currently, because of its elegant handling of json objects
+        natively, we have chosen to work with MongoDB first. If you pull the
+        latest code available from our github page, you will be able to test
+        out this functionality.</p>
+        <p>First, make sure you have downloaded MongoDB 1.6.5 or higher. This
+        is important since older versions of MongoDB do not allow you to mix
+        the selection of queries (we sometimes left the id of a database
+        object for security and speed reasons).</p>
+        <p>Second, make sure you have node installed. The code has been
+        developed using version v0.2.5, but as long as the version is
+        compatible with the packages below, using more recent versions is
+        welcome. Be sure to have the following packages installed:</p>
+          <ul>
+            <li>Express</li>
+            <li>Node-static</li>
+            <li>node-mongo-native</li>
+          </ul>
+        <p>The first two are available using node's package manager, npm,
+        while the latter must be pulled directly from github. Make sure you
+        have it linked into the commonJS setup; otherwise it won't be able
+        to be imported when the server is started. It is currently the best
+        API between node and MongoDB, and for this reason t is required for
+        using FilterView via a server.</p>
+        <p>After all the installation is completed, cd into the root
+        directory of the FilterView repo and checkout the master
+        branch. Then make sure you have the MongoDB server running by
+        executing the command from the FilterView root directory:</p>
+        <pre class="Rstyle">mongod --dbpath ./db --directoryperdb --port 27018</pre>
+        <p>You should see a successful startup of the database. Once this is
+        running, from the FilterView directory start up the node server:</p>
+        <pre class="Rstyle">node server.js</pre>
+        <p>If you don't see any error messages, then you should be on your
+        way. Next go to the address http:/localhost:8000 in your browser
+        (preferrably Firefox, Chrome, or Safari) and you should see a list
+        of examples. If you see all the plots, then you are currently
+        generating these via the database running on your computer.</p>
+      </div>
+    </div>
+    <div class="footer" />
+  </body>
+</html>
