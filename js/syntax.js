@@ -1,6 +1,19 @@
 require(["order!thirdparty/js/jquery-1.4.4.min.js",
          "order!data/clusters.js",
          "order!jscliplot"], function (_, foo, jscliplot) {
+             // Code that enables toc navigation
+             var dropClicked = false;
+             $(".menu").click(function(e) {
+                 var drop = $(this).children(".dropdown");
+                 var wasBlock = (drop.css("display") == "block");
+                 $(".dropdown").css("display", "none");
+                 wasBlock || drop.css("display", "block");
+                 return dropClicked;
+             });
+             $(".dropdown a").click(function(e) {
+                 dropClicked = true;
+             });
+
              var exmpl = '<div id="${contid}" class="right_half"><div id="${svgid}" /><div id="${uiid}"/></div>';
              var fncalls = [
                  [foo.xx],
