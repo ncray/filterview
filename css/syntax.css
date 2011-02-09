@@ -82,5 +82,8 @@ body {
 
 .point-metadata {
     font-size: 8px;
-    padding: 8px;
+}
+
+.footer {
+    padding-bottom: 30px;
 }
