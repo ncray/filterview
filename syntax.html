@@ -166,6 +166,65 @@
           it ceases to be an option to select as a checkbox. Once the slider
           is readjusted to accept some red datapoints again, it reappears.
         </div>
+        <div>
+          <h2>Using Post Functions</h2>
+          <p>In order to increaase the flexibility of the plots, we allow
+          the user to add hooks into the plot which fire each time the
+          datapoints have been plotted. This can be useful for creating
+          extensions to simple scatterplots, like best-fit lines, confidence
+          bounds, etc.</p>
+        </div>
+        <div>
+          <h3>A postFn example</h3>
+          <pre class="Rstyle">plot(foo.yy, {
+    col:foo.col,
+    type:"o",
+    postFns:[drawCLs],
+    ui: {
+        checkbox: "col"
+    }
+});</pre>
+          <div class="show" num="8">Show</div>
+          <p>In this example, we have introduced a post function with the
+          name of drawCLs. This function will draw confidence bands on the
+          plot which are two standard deviations from the selected y
+          coordinates. The code written for this function is given below</p>
+      </div>
+      <div>
+        <pre class="Rstyle">var drawCLs = function (datapts) {
+    if (!datapts.length) return;
+    var yys = datapts.map(function(pt) {return pt.yy});
+    var ybar = (yys.reduce(function(prev, curr) {
+        return prev+curr;
+    })/(yys.length));
+    var std = Math.pow(
+        yys.map(function(y) {
+            return Math.pow(y-ybar, 2)
+        }).reduce(function(prev, curr) {
+            return prev+curr;
+        })/(yys.length - 1),
+    0.5);
+    var xmin = this.xAxis._scale.min,
+        xmax = this.xAxis._scale.max,
+        lcl = ybar - 2*std,
+        ucl = ybar + 2*std;
+
+    [lcl, ucl].forEach(function(y) {
+        var ptone = this._getSVGCoords(xmin, y);
+        var pttwo = this._getSVGCoords(xmax, y);
+        this._wrapper.line(this._plotCont, ptone[0], ptone[1],
+            pttwo[0], pttwo[1], {stroke: "red", strokeWidth: 2});
+    }, this);
+    <span style="color:red;">// Now highlight the ones outside the bands</span>
+    var svgpts = this._datapointCont.childNodes;
+    for (var i = 0; i < svgpts.length; i++) {
+        var yco = this._getPlotCoords(null,
+            this._getValue(svgpts[i],"cy"));
+        if ((yco > ucl) || (yco < lcl)) {
+            svgpts[i].setAttribute("fill", "orange");
+        }
+    }
+};</pre>
       </div>
       <div class="footer"/>
     </div>
