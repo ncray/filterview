@@ -9,7 +9,6 @@
     <link media="screen" rel="stylesheet" href="thirdparty/development-bundle/themes/base/jquery.ui.all.css" type="text/css"/>
     <link media="screen" rel="stylesheet" href="thirdparty/development-bundle/themes/ui-lightness/jquery.ui.all.css" type="text/css"/>
     <link rel="stylesheet" href="css/toc.css" type="text/css"/>
-    <link rel="stylesheet" href="css/jsonpexample.css" type="text/css"/>
 
     <!-- Require js import -->
     <script data-main="js/jsonpexample.js" src="js/require.js"></script>
@@ -42,7 +41,7 @@
         <p>We currently demarcate both examples of remote data (jsonp and in
         a database) by bundling the appropriate metadata in a RemoteData
         object. Specifically, the constructor for this object is given by:
-<pre style="Rstyle"><code>function RemoteData(url, callback) {
+<pre class="Rstyle"><code>function RemoteData(url, callback) {
     this.url = url;
     this.callback = callback;
 };</code></pre>
@@ -88,7 +87,7 @@
              return tweets.results.map(function(tweet) {
                  return tweet.text;
              });
-         }),
+        }),
 };</code></pre>
       <p>Now after creating this object, we can simply pass it to FilterView
       as in the case with locally stored data. FilterView will make the
