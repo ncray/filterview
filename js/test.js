@@ -79,7 +79,7 @@ require(["order!thirdparty/js/jquery-1.4.4.min.js",
                  'plot(foo.xx, foo.yy, {col: foo.col, ui:{regexp: "col"}})' : [foo.xx, foo.yy, {col: foo.col, ui:{regexp: "col"}}],
                  'plot(foo.xx, foo.yy, {col:foo.col, tt:foo.tt, ui:{checkbox:"col",slider:"tt"}})' : [foo.xx, foo.yy, {col:foo.col, tt:foo.tt, ui:{checkbox:"col",slider:"tt"}}],
                  'plot(foo.xx, foo.yy, {col: foo.col, tt:foo.tt, ui:{slider:"xx"}, cui:{autocomplete:"col"}})' : [foo.xx, foo.yy, {col: foo.col, tt:foo.tt, ui:{slider:"xx"}, cui:{autocomplete:"col"}}],
-                 'plot(foo.yy, {col: foo.col, type:"o", postFns:[drawCls], ui:{checkbox:"col"}})' : [foo.yy, {col:foo.col, type:"o", postFns: [drawCLs], ui:{checkbox:"col"}}],
+                 'plot(foo.yy, {col: foo.col, type:"o", postFns:[drawCLs], ui:{checkbox:"col"}})' : [foo.yy, {col:foo.col, type:"o", postFns: [drawCLs], ui:{checkbox:"col"}}],
              };
 
                     var svgtmpl = '<div id="${id}" class="right_half"></div>';
