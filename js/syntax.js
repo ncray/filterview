@@ -44,8 +44,8 @@ require(["order!thirdparty/js/jquery-1.4.4.min.js",
                  [foo.xx, foo.yy, {col:foo.col, ui:{slider:"xx"}, cui:{checkbox:"col"}}],
                  [foo.yy, {col:foo.col, type:"o", postFns:[drawCLs], ui: {checkbox: "col"}}]
              ];
-             $(".show").click(function() {
-                 var wasEmpty = ($(this).text() == "Show");
+             $(".show").click(function(e) {
+                 var wasEmpty = ($(this).children(":first-child").text() == "Show");
                  var num = $(this).attr("num");
                  var ids = {
                      contid: "cont"+num,
@@ -53,7 +53,7 @@ require(["order!thirdparty/js/jquery-1.4.4.min.js",
                      uiid: "ui"+num,
                  };
                  if (wasEmpty) {
-                     $(this).text("Hide");
+                     $(this).children(":first-child").text("Hide");
                      $(this).parent().addClass("left_half")
                                      .after('<div class="clear"/>');
                      $.tmpl(exmpl, ids).insertAfter($(this).parent());
@@ -61,11 +61,13 @@ require(["order!thirdparty/js/jquery-1.4.4.min.js",
                      jscliplot.createSVGPlot("#"+ids.svgid, "#"+ids.uiid);
                      jscliplot.plot.apply(jscliplot, fncalls[num]);
                  } else {
-                     $(this).text("Show");
+                     $(this).children(":first-child").text("Show");
                      $('#'+ids.svgid).svg("destroy");
                      $("#"+ids.contid).remove();
                      $(this).parent().removeClass("left_half")
                             .next(".clear").remove();
                  }
+                 e.preventDefault();
+                 debugger;
              });
          });

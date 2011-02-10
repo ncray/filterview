@@ -104,6 +104,10 @@ body {
     border: 3px solid #2f2f4f;
     padding: 2px;
 }
+.show a {
+    text-decoration: none;
+    color: #000;
+}
 
 .point-metadata {
     font-size: 12px;
