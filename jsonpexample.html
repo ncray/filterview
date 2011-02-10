@@ -62,7 +62,12 @@
         <p> Using the above logic, let us create a small example with
         Twitter. Using the Twitter API, we create a bieber object as
         follows:</p>
-<pre class="Rstyle"><code>var bieber = {
+<pre class="Rstyle"><code>
+var colors = ["red", "blue", "pink", "orange", "yellow",
+              "purple", "green", "black"];
+var lan2col = {};
+var lans = 0;
+var bieber = {
     xx: new RemoteData(
         "http://search.twitter.com/search.json?q=bieber&rpp=100",
         function (tweets) {
@@ -92,6 +97,24 @@
                 return tweet.text;
             });
         }),
+    user: new RemoteData(
+        "http://search.twitter.com/search.json?q=bieber&rpp=100",
+        function (tweets) {
+            return tweets.results.map(function(tweet) {
+                return tweet.from_user;
+            });
+        }),
+    col: new RemoteData(
+        "http://search.twitter.com/search.json?q=bieber&rpp=100",
+        function (tweets) {
+            return tweets.results.map(function(tweet) {
+                var lan = tweet.iso_language_code;
+                if (!(lan in lan2col)) {
+                    lan2col[lan] = (lans++);
+                }
+                return colors[(lan2col[lan] % colors.length)];
+            });
+        }),
 };</code></pre>
       <p>Now after creating this object, we can simply pass it to FilterView
       as in the case with locally stored data. FilterView will make the
@@ -99,13 +122,16 @@
       forget to initialize the svgplot to some div's id.</p>
       <pre class="Rstyle"><code>jscliplot.createSVGPlot("#svgslave","#uislave");
 jscliplot.template('&lt;div class="tweet"&gt;
-                    &lt;p&gt;Tweet:${text}&lt;/p&gt;
+                    &lt;p&gt;&lt;b&gt;User:&lt;/b&gt; ${user}&lt;/p&gt;
+                    &lt;p&gt;&lt;b&gt;Tweet:&lt;/b&gt; ${text}&lt;/p&gt;
                     &lt;p&gt;Words:${xx}&lt;br/&gt;
                     Exclaimations:${yy}&lt;/p&gt;
                     &lt;/div&gt;');
 jscliplot.plot(bieber.xx, bieber.yy,{
     lan: bieber.lan,
     text: bieber.text,
+    user: bieber.user,
+    col: bieber.col,
     xlab: "Words",
     ylab: "Num !'s",
     ui:{
