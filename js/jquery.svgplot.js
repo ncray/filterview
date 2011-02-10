@@ -11,6 +11,7 @@
 	this._wrapper = wrapper; // The attached SVG wrapper object
 	this._plotCont = this._wrapper.svg(0, 0, 0, 0, {class_: 'svg-plot'}); // The main container for the plot
         this._slavecont = null;
+        this._bg = null;
 	this._title = {value: '', offset: 25, settings: {textAnchor: 'middle'}};
         this._area = [0.15, 0.05, 0.95, 0.85]; // The chart area: left, top, right, bottom, > 1 in pixels, <= 1 as proportion
 	this._areaFormat = {fill: 'none', stroke: 'black'}; // The formatting for the plot area
@@ -195,28 +196,27 @@
 	   @param  noYGrid  (boolean) true to suppress the y-gridlines, false to draw them (optional)
 	   @return  (element) the background group element */
 	_drawChartBackground: function(noXGrid, noYGrid) {
-	    var bg = this._wrapper.group(this._plotCont, {class_: 'background'});
+	    this._bg = this._wrapper.group(this._plotCont, {class_: 'background'});
 	    var dims = this._getDims();
-	    this._wrapper.rect(bg, dims[this.X], dims[this.Y], dims[this.W], dims[this.H], this._areaFormat);
+	    this._wrapper.rect(this._bg, dims[this.X], dims[this.Y], dims[this.W], dims[this.H], this._areaFormat);
 	    if (this._gridlines[0] && this.yAxis._ticks.major && !noYGrid) {
-		this._drawGridlines(bg, true, this._gridlines[0], dims);
+		this._drawGridlines(true, this._gridlines[0], dims);
 	    }
 	    if (this._gridlines[1] && this.xAxis._ticks.major && !noXGrid) {
-		this._drawGridlines(bg, false, this._gridlines[1], dims);
+		this._drawGridlines(false, this._gridlines[1], dims);
 	    }
-	    return bg;
+	    return this._bg;
 	},
 
 	/* Draw one set of gridlines.
-	   @param  bg      (element) the background group element
 	   @param  horiz   (boolean) true if horizontal, false if vertical
 	   @param  format  (object) additional settings for the gridlines */
-	_drawGridlines: function(bg, horiz, format, dims) {
-	    var g = this._wrapper.group(bg, format);
+	_drawGridlines: function(horiz, format, dims) {
+	    var g = this._wrapper.group(this._bg, format);
 	    var axis = (horiz ? this.yAxis : this.xAxis);
 	    var scales = this._getScales();
-	    var major = Math.floor(axis._scale.min / axis._ticks.major) * axis._ticks.major;
-	    major += (major <= axis._scale.min ? axis._ticks.major : 0);
+            var buffer_ticks = Math.floor(axis._buffer/axis._ticks.major);
+            var major = axis._scale.min + axis._buffer - (buffer_ticks*axis._ticks.major);
 	    while (major < axis._scale.max) {
 		var v = (horiz ? axis._scale.max - major : major - axis._scale.min) *
 		    scales[horiz ? 1 : 0] + (horiz ? dims[this.Y] : dims[this.X]);
@@ -244,8 +244,8 @@
 			       (horiz ? dims[this.X] + dims[this.W] : zero),
 			       (horiz ? zero : dims[this.Y] + dims[this.H]));
 	    if (axis._ticks.major) {
-		var major = Math.floor(axis._scale.min / axis._ticks.major) * axis._ticks.major;
-		major += (major < axis._scale.min ? axis._ticks.major : 0);
+                var buffer_ticks = Math.floor(axis._buffer/axis._ticks.major);
+                var major = axis._scale.min + axis._buffer - (buffer_ticks*axis._ticks.major);
 		var offsets = [(axis._ticks.position == 'sw' || axis._ticks.position == 'both' ? -1 : 0),
 			       (axis._ticks.position == 'ne' || axis._ticks.position == 'both' ? +1 : 0)];
 		while (major <= axis._scale.max) {
@@ -600,8 +600,9 @@
 	this._titleOffset = 0; // The offset for positioning the title
 	this._labelFormat = {fontSize: "10px"}; // Formatting settings for the labels
 	this._lineFormat = {stroke: 'black', strokeWidth: 1}; // Formatting settings for the axis lines
-	this._ticks = {major: major || 10, size: 15, position: 'ne'}; // Tick mark options
+	this._ticks = {major: major || 10, size: 10, position: 'ne'}; // Tick mark options
 	this._scale = {min: min || 0, max: max || 100}; // Axis scale settings
+        this._buffer = 0;
         this._numTicks = 8;
     }
 
@@ -652,15 +653,11 @@
             }
             buffer || (buffer = 0.1);
             var range = max - min;
-            if (buffer < 1) {
-                min -= (buffer*range);
-                max += (buffer*range);
-            } else {
-                min -= buffer;
-                max += buffer;
-            }
+            this._buffer = buffer < 1 ? range*buffer : buffer;
+            min -= this._buffer;
+            max += this._buffer;
             this.scale(min, max);
-            this.ticks((max - min)/this._numTicks);
+            this.ticks(range/this._numTicks);
         },
 
 	/* Set or retrieve the title for this axis.

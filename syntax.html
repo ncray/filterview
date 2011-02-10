@@ -46,7 +46,9 @@
         </div>
         <div>
           <h3>Option: col</h3>
-          <pre class="Rstyle">plot(foo.xx, foo.yy, {col: foo.col})</pre>
+          <pre class="Rstyle">plot(foo.xx, foo.yy, {
+    col: foo.col
+})</pre>
           <div class="show" num="2"><a href="#">Show</a></div>
             <p>When you pass in a third argument, it is assumed to be an
             object containing all objects. If you only supply two arguments
@@ -212,7 +214,7 @@
     [lcl, ucl].forEach(function(y) {
         var ptone = this._getSVGCoords(xmin, y);
         var pttwo = this._getSVGCoords(xmax, y);
-        this._wrapper.line(this._plotCont, ptone[0], ptone[1],
+        this._wrapper.line(this._bg, ptone[0], ptone[1],
             pttwo[0], pttwo[1], {stroke: "red", strokeWidth: 2});
     }, this);
     <span style="color:red;">// Now highlight the ones outside the bands</span>

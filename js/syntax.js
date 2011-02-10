@@ -22,7 +22,7 @@ require(["order!thirdparty/js/jquery-1.4.4.min.js",
                  [lcl, ucl].forEach(function(y) {
                      var ptone = this._getSVGCoords(xmin, y);
                      var pttwo = this._getSVGCoords(xmax, y);
-                     this._wrapper.line(this._plotCont, ptone[0], ptone[1], pttwo[0], pttwo[1], {stroke: "red", strokeWidth: 2});
+                     this._wrapper.line(this._bg, ptone[0], ptone[1], pttwo[0], pttwo[1], {stroke: "red", strokeWidth: 2});
                  }, this);
                  // Now highlight the ones outside the bands
                  var svgpts = this._datapointCont.childNodes;
