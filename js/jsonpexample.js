@@ -29,6 +29,6 @@ require(["order!thirdparty/js/jquery-1.4.4.min.js",
              };
              $("#svgslave").css("height", $("#svgslave").css("width"));
              jscliplot.createSVGPlot("#svgslave", "#uislave");
-             jscliplot.template('<div class="tweet"><p>Tweet:${text}</p><p>Words:${xx}<br/>Exclaimations:${yy}</p></div>');
+             jscliplot.template('<div class="tweet"><p>Tweet:${text}</p><p>Words: ${xx}<br/>Exclaimations: ${yy}</p></div>');
              jscliplot.plot(bieber.xx, bieber.yy, {lan: bieber.lan, text: bieber.text, xlab: "Words", ylab:"Num !'s", ui:{dropdown:"lan"}});
          });
