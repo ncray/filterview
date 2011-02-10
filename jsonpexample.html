@@ -63,30 +63,34 @@
         Twitter. Using the Twitter API, we create a bieber object as
         follows:</p>
 <pre class="Rstyle"><code>var bieber = {
-    xx: new RemoteData("http://search.twitter.com/search.json?q=bieber&rpp=100",
+    xx: new RemoteData(
+        "http://search.twitter.com/search.json?q=bieber&rpp=100",
         function (tweets) {
             return tweets.results.map(function(tweet) {
                 return tweet.text.split(' ').
                     filter(function(xx) {return (xx.length > 0)}).length;
             });
         }),
-    yy: new RemoteData("http://search.twitter.com/search.json?q=bieber&rpp=100",
-         function (tweets) {
-             return tweets.results.map(function(tweet) {
-                 return (tweet.text.split('!').length - 1);
-             });
+    yy: new RemoteData(
+        "http://search.twitter.com/search.json?q=bieber&rpp=100",
+        function (tweets) {
+            return tweets.results.map(function(tweet) {
+                return (tweet.text.split('!').length - 1);
+            });
         }),
-    lan: new RemoteData("http://search.twitter.com/search.json?q=bieber&rpp=100",
-         function (tweets) {
-             return tweets.results.map(function(tweet) {
-                 return (tweet.iso_language_code || "unknown");
-             });
+    lan: new RemoteData(
+        "http://search.twitter.com/search.json?q=bieber&rpp=100",
+        function (tweets) {
+            return tweets.results.map(function(tweet) {
+                return (tweet.iso_language_code || "unknown");
+            });
         }),
-    text: new RemoteData("http://search.twitter.com/search.json?q=bieber&rpp=100",
-         function (tweets) {
-             return tweets.results.map(function(tweet) {
-                 return tweet.text;
-             });
+    text: new RemoteData(
+        "http://search.twitter.com/search.json?q=bieber&rpp=100",
+        function (tweets) {
+            return tweets.results.map(function(tweet) {
+                return tweet.text;
+            });
         }),
 };</code></pre>
       <p>Now after creating this object, we can simply pass it to FilterView
