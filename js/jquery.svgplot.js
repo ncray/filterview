@@ -290,15 +290,23 @@
             var x_attr = this._isRemote ? (this._queryelem.xx ? this._queryelem.xx.remote_attr : null) : "xx";
             var y_attr = this._isRemote ? this._queryelem.yy.remote_attr : "yy";
             var col_attr = (this._isRemote && this._queryelem.col) ? this._queryelem.col.remote_attr : "col";
-            var rad_attr = (this._isRemote && this._queryelem.radius) ? this._queryelem.radius.remote_attr : "rad";
+            var rad_attr = (this._isRemote && this._queryelem.rad) ? this._queryelem.rad.remote_attr : "rad";
 
-            var getPoint = function (pt, i) {
-                return {
+            function getPoint(pt, i) {
+                var drawPt = {
                     xx  : (pt[x_attr] || (i+1)),
                     yy  : pt[y_attr],
                     col : (pt[col_attr] || "black"),
                     rad : (pt[rad_attr] || pointR),
                 };
+                if (this._isRemote) {
+                    for (var lattr in this._queryelem) {
+                        var rattr = this._queryelem[lattr].remote_attr;
+                        (!pt[rattr]) || (drawPt[lattr] = pt[rattr]);
+                    }
+                    return drawPt;
+                }
+                return $.extend({}, pt, drawPt);
             };
 
             filterData.forEach(function(pt, i) {
@@ -327,7 +335,7 @@
             var dims = this._getDims();
             $(elem).hover(function() {
                 var toolcont = self._wrapper.group(self._plot, {class_: "point-metadata"});
-                var pos = [self._getValue(elem, "cx"), self._getValue(elem, "cy"), dims[self.W]/5, dims[self.H]/8];
+                var pos = [self._getValue(elem, "cx"), self._getValue(elem, "cy"), dims[self.W]/3, dims[self.H]/3];
                 self._wrapper.rect(toolcont, pos[0], pos[1]-pos[3], pos[2], pos[3],
                                    {fill: 'white', stroke: data.col, strokeWidth: 3});
                 var temp = self._wrapper.foreignObject(toolcont, pos[0], pos[1]-pos[3], pos[2], pos[3]);

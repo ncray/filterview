@@ -118,8 +118,8 @@ body {
 }
 
 .tweet {
-    width: 200px;
-    height: 80px;
+    font-size: 14px;
+    padding: 3px;
 }
 
 .clear {
