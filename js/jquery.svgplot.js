@@ -332,13 +332,16 @@
             }
             var self = this;
             var html = $.tmpl(this._template, data);
-            var dims = this._getDims();
+
             $(elem).hover(function() {
-                var toolcont = self._wrapper.group(self._plot, {class_: "point-metadata"});
-                var pos = [self._getValue(elem, "cx"), self._getValue(elem, "cy"), dims[self.W]/5, dims[self.H]/8];
-                self._wrapper.rect(toolcont, pos[0], pos[1]-pos[3], pos[2], pos[3],
+                var dims = self._getDims();
+                var toolcont = self._wrapper.group(self._plotCont, {class_: "point-metadata"});
+                var pos = [self._getValue(elem, "cx"), self._getValue(elem, "cy"), dims[self.W]/2, dims[self.H]/2];
+                var left = (pos[0] <= (dims[self.W]/2)) ? pos[0] : pos[0]-pos[2];
+                var top = (pos[1] <= (dims[self.H]/2)) ? pos[1] : pos[1]-pos[3];
+                self._wrapper.rect(toolcont, left, top, pos[2], pos[3],
                                    {fill: 'white', stroke: data.col, strokeWidth: 3});
-                var temp = self._wrapper.foreignObject(toolcont, pos[0], pos[1]-pos[3], pos[2], pos[3]);
+                var temp = self._wrapper.foreignObject(toolcont, left, top, pos[2], pos[3]);
                 $(temp).append(html);
             }, function() {
                 $(".point-metadata").remove();
