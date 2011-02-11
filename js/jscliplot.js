@@ -3,8 +3,10 @@
 // Email: jacksongorham@gmail.com
 
 define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/ui/jquery-ui-1.8.7.custom.js", "order!thirdparty/jquery.svg.js", "order!js/jquery.svgplot.js"], function() {
+    /* Store svgplot reference */
     var svgplot;
 
+    /* Try to parse any argument thats a string */
     function evalArg(arg) {
         if (typeof arg !== 'string') {
             return arg;
@@ -15,6 +17,11 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
         return arg;
     };
 
+    /* Determine if the obj passed in is in fact an instance
+       of RemateData and a reference data stored at some url
+       @param obj - the object
+       @return (boolean) true if and only if is reference data stored
+               at some url */
     function isAjaxRemote (obj) {
         if ((typeof obj != "object") || (obj.constructor == Array)) {
             return false;
@@ -22,6 +29,15 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
         return !!(obj.url);
     };
 
+    /* Depending on whether the data is all present as an array,
+       a mixture of present and url references, or held remotely
+       on a server, this zips all the data up from a list of lists
+       into a cluster of points to be sent to the loadData function
+       in the SVGPlot object.
+       @param xx - the xx data (may be null)
+       @param yy - the yy data
+       @param opts - the user's options
+       @return the zipped up data (or none if we must make jsonp calls) */
     function zipParams (xx, yy, opts) {
         var hasAjax = false;
         if ((yy.constructor.name == "RemoteData") && (!yy.url)) {
@@ -42,6 +58,7 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
         return zipLocalData(xx, yy, opts);
     };
 
+    /* Zip the data up if all held locally */
     function zipLocalData(xx, yy, opts) {
         xx || (xx = []);
         var point_params = Object.keys(opts).filter(function(key) {
@@ -65,6 +82,8 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
         return $.extend({local: local}, opts);
     };
 
+    /* Zip the data up as best as possible when it refers
+       to data held on the server in a database */
     function zipRemoteData(xx, yy, opts) {
         var remote = {};
         remote.xx = (xx && (xx.constructor.name == "RemoteData")) ? xx : null;
@@ -78,6 +97,8 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
         return $.extend({remote:remote}, opts);
     };
 
+    /* function called recursively to load data that needs
+       to be pulled in from jsonp requests. */
     function loadAjaxData(data) {
         var url, attrs = [];
         for (var attr in data) {
@@ -108,7 +129,17 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
         svgplot.plot.loadData(zipLocalData(xx, yy, data));
     };
 
+    /* The jscliplot object that is the gateway for the user
+       to actually invoke calls in the R-like syntax */
     return {
+        /* Must be called before plot, in order to attach the svgplot
+           and ui elements to some divs on the page */
+        createSVGPlot: function (svg_id, ui_id) {
+            $(svg_id).svg();
+            svgplot = $(svg_id).svg('get');
+            svgplot.plot._slavecont = ui_id;
+        },
+        /* The R like plot function */
         plot: function () {
             var xx, yy, opts, data, args = Array.prototype.slice.call(arguments);
             switch (args.length) {
@@ -150,11 +181,7 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
                 svgplot.plot.loadData(data);
             }
         },
-        createSVGPlot: function (svg_id, ui_id) {
-            $(svg_id).svg();
-            svgplot = $(svg_id).svg('get');
-            svgplot.plot._slavecont = ui_id;
-        },
+        /* Used to set the template of the SVGPlot object */
         template: function(temp) {
             svgplot.plot.template(temp);
         },
