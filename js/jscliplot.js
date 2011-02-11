@@ -158,20 +158,20 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
         plot: function () {
             var xx, yy, opts, data, args = Array.prototype.slice.call(arguments);
             switch (args.length) {
-                case 0:
-                    return;
-                case 1:
+            case 0:
+                return;
+            case 1:
+                yy = args[0];
+                break;
+            case 2:
+                if (args[1].constructor == Object) {
                     yy = args[0];
-                    break;
-                case 2:
-                    if (args[1].constructor == Object) {
-                        yy = args[0];
-                        opts = args[1];
-                    } else {
-                        xx = args[0];
-                        yy = args[1];
-                    }
-                    break;
+                    opts = args[1];
+                } else {
+                    xx = args[0];
+                    yy = args[1];
+                }
+                break;
             case 3:
                 xx = args[0];
                 yy = args[1];
