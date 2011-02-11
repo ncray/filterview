@@ -409,7 +409,7 @@
 
         /* Create plot given the selected data */
         _makePlot: function (queriedData, resizeAxes) {
-            (arguments.length <= 1) || (resizeAxes = this._autorescale);
+            (arguments.length > 1) || (resizeAxes = this._autorescale);
             queriedData || (queriedData = this._datapts);
 
             this._clearPlot();
