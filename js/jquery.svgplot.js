@@ -8,8 +8,10 @@
 (function($, undefined) {
     /* hook to plug this into jquery svg */
     $.svg.addExtension('plot', SVGScatterPlot);
+    $.svg.addExtension('hist', SVGHistogram);
 
     function SVGPlotCore() {
+        // id of div to insert UI elements into
         this._slavecont = null;
         // reference to background of the svgplot
         this._bg = null;
@@ -641,7 +643,6 @@
 	this._wrapper = wrapper;
         // The main container for the plot
 	this._plotCont = this._wrapper.svg(0, 0, 0, 0, {class_: 'svg-plot'});
-        // id of div to insert UI elements into
 
         /* Construct Axes */
         this._drawNow = false;
@@ -653,6 +654,77 @@
     };
 
     SVGScatterPlot.prototype = new SVGPlotCore();
+
+    function SVGHistogram (wrapper) {
+        // The attached SVG wrapper object
+	this._wrapper = wrapper;
+        // The main container for the plot
+	this._plotCont = this._wrapper.svg(0, 0, 0, 0, {class_: 'svg-plot'});
+        this._gridlines = [{stroke: "lightgray"}, null];
+
+        /* Construct Axes */
+        this._drawNow = false;
+	this.xAxis = new SVGPlotAxis(this); // The main x-axis
+	this.xAxis.title('X', 40);
+	this.yAxis = new SVGPlotAxis(this); // The main y-axis
+	this.yAxis.title('Freq', 40);
+	this._drawNow = true;
+    };
+
+    SVGHistogram.prototype = new SVGPlotCore();
+
+    $.extend(SVGHistogram.prototype, {
+        _numBins: function (n) {
+            return (n < 30) ? Math.floor(Math.sqrt(n))+1 : Math.floor(Math.log(n)/Math.log(2)+2);
+        },
+        _dropIntoBuckets: function (datapts) {
+            this._bins = [];
+            datapts || (datapts = this._datapts);
+            var xbound = datapts.reduce(function(prev, curr) {
+                return [Math.min(prev[0],curr.xx), Math.max(prev[1], curr.xx)];
+            }, [Infinity, -Infinity]).map(roundDigits);
+            var numbins = this._numBins(datapts.length);
+            var binsize = (xbound[1] - xbound[0])/numbins;
+            for (var bot = xbound[0]; bot < xbound[1]; bot+=binsize) {
+                this._bins.push([bot, bot+binsize, 0]);
+            }
+            datapts.forEach(function(val) {
+                var i = Math.floor((val.xx-xbound[0])/binsize);
+                i = Math.min(i, numbins-1);
+                i = Math.max(i, 0);
+                this._bins[i][2]++;
+            }, this);
+        },
+        _maxCount: function () {
+            var counts = this._bins.map(function(bin) {return bin[2]});
+            return Math.max.apply(Math, counts);
+        },
+        resetAxes: function (datapts) {
+            datapts || (datapts = this._datapts);
+            this._dropIntoBuckets(datapts);
+            var numbins = this._bins.length;
+            var maxcount = this._maxCount();
+
+            // Let axes handle edge cases (e.g. no datapts)
+            this._drawNow = false;
+            this.xAxis._numTicks = numbins;
+            this.xAxis.resize(this._bins[0][0], this._bins[numbins-1][1]);
+            this.yAxis.resize(0, maxcount);
+        },
+        drawPlot: function (filterData) {
+            this._datapointCont = this._wrapper.group(this._plot);
+            this._dropIntoBuckets(filterData);
+            var maxcount = this._maxCount();
+            this._bins.forEach(function(bin, i) {
+                var topleft = this._getSVGCoords(bin[0], bin[2]);
+                var bottomright = this._getSVGCoords(bin[1], 0);
+                var w = bottomright[0] - topleft[0];
+                var h = bottomright[1] - topleft[1];
+                this._wrapper.rect(this._datapointCont, topleft[0], topleft[1], w, h, {
+                    fill: "blue", color: "black", strokeWidth: "5px"});
+            }, this);
+        },
+    });
 
     /* Details about each plot axis.
        @param  plot   (SVGPlot) the owning plot
