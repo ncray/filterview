@@ -1,20 +1,15 @@
-// Definition of the plotting package for the jscli.
-// Heavily based on the jquery.svgplot.js extension
-// designed by Keith Wood, who also designed the
-// jquery.svg.js package as a whole.
+// Heavily based on the jquery.svgplot.js and
+// jquery.svggraph.js extensions designed by Keith
+// Wood, who also designed the jquery.svg.js package
+// as a whole.
 // Authors: Jackson Gorham
 // Date: February 10, 2011
 
 (function($, undefined) {
     /* hook to plug this into jquery svg */
-    $.svg.addExtension('plot', SVGPlot);
+    $.svg.addExtension('plot', SVGScatterPlot);
 
-    function SVGPlot(wrapper) {
-        // The attached SVG wrapper object
-	this._wrapper = wrapper;
-        // The main container for the plot
-	this._plotCont = this._wrapper.svg(0, 0, 0, 0, {class_: 'svg-plot'});
-        // id of div to insert UI elements into
+    function SVGPlotCore() {
         this._slavecont = null;
         // reference to background of the svgplot
         this._bg = null;
@@ -42,17 +37,11 @@
         this._type = "p";
         // post functions that are hooked after completion of plot
         this._postFns = [];
-
-        /* Construct Axes */
+        // must be true to refresh plot
         this._drawNow = false;
-	this.xAxis = new SVGPlotAxis(this); // The main x-axis
-	this.xAxis.title('X', 40);
-	this.yAxis = new SVGPlotAxis(this); // The main y-axis
-	this.yAxis.title('Y', 40);
-	this._drawNow = true;
     };
 
-    $.extend(SVGPlot.prototype, {
+    $.extend(SVGPlotCore.prototype, {
 	/* Useful indexes. */
 	X: 0, Y: 1, W: 2, H: 3,
         L: 0, T: 1, R: 2, B: 3,
@@ -311,7 +300,7 @@
 	/* Make a scatterplot given the datapoints
            @param filterData ([{..}]) an array of point objects to be plotted
            @return none */
-        _drawScatterPlot: function (filterData) {
+        drawPlot: function (filterData) {
             this._datapointCont = this._wrapper.group(this._plot);
 	    var dims = this._getDims();
             var pointR = Math.min(dims[this.W], dims[this.H])/125;
@@ -434,7 +423,7 @@
 	    this._drawAxis(true);
 	    this._drawAxis(false);
 	    this._drawTitle();
-            this._drawScatterPlot(queriedData);
+            this.drawPlot(queriedData);
             this._postFns.forEach(function(fn) {
                 fn.call(this, queriedData);
             }, this);
@@ -646,6 +635,24 @@
             this._updating = false;
         },
     });
+
+    function SVGScatterPlot(wrapper) {
+        // The attached SVG wrapper object
+	this._wrapper = wrapper;
+        // The main container for the plot
+	this._plotCont = this._wrapper.svg(0, 0, 0, 0, {class_: 'svg-plot'});
+        // id of div to insert UI elements into
+
+        /* Construct Axes */
+        this._drawNow = false;
+	this.xAxis = new SVGPlotAxis(this); // The main x-axis
+	this.xAxis.title('X', 40);
+	this.yAxis = new SVGPlotAxis(this); // The main y-axis
+	this.yAxis.title('Y', 40);
+	this._drawNow = true;
+    };
+
+    SVGScatterPlot.prototype = new SVGPlotCore();
 
     /* Details about each plot axis.
        @param  plot   (SVGPlot) the owning plot
