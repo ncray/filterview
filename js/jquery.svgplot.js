@@ -1,40 +1,48 @@
-// Definition of the plotting package for the jscli.
-// Heavily based on the jquery.svgplot.js extension
-// designed by Keith Wood, who also designed the
-// jquery.svg.js package as a whole.
+// Heavily based on the jquery.svgplot.js and
+// jquery.svggraph.js extensions designed by Keith
+// Wood, who also designed the jquery.svg.js package
+// as a whole.
+// Authors: Jackson Gorham
+// Date: February 10, 2011
 
 (function($, undefined) {
+    /* hook to plug this into jquery svg */
+    $.svg.addExtension('plot', SVGScatterPlot);
 
-    $.svg.addExtension('plot', SVGPlot); // hook to plug this into jquery svg
-
-    function SVGPlot(wrapper) {
-	this._wrapper = wrapper; // The attached SVG wrapper object
-	this._plotCont = this._wrapper.svg(0, 0, 0, 0, {class_: 'svg-plot'}); // The main container for the plot
+    function SVGPlotCore() {
+        // id of div to insert UI elements into
         this._slavecont = null;
+        // reference to background of the svgplot
         this._bg = null;
+        // Plot title parameters
 	this._title = {value: '', offset: 25, settings: {textAnchor: 'middle'}};
-        this._area = [0.15, 0.05, 0.95, 0.85]; // The chart area: left, top, right, bottom, > 1 in pixels, <= 1 as proportion
-	this._areaFormat = {fill: 'none', stroke: 'black'}; // The formatting for the plot area
-	this._gridlines = [{stroke: "lightgray"}, {stroke: "lightgray"}]; // The formatting of the x- and y-gridlines
+        // The chart area: left, top, right, bottom, > 1 in pixels, <= 1 as proportion
+        this._area = [0.15, 0.025, 0.95, 0.925];
+        // The formatting for the plot area
+	this._areaFormat = {fill: 'none', stroke: 'black'};
+        // The formatting of the x- and y-gridlines
+	this._gridlines = [{stroke: "lightgray"}, {stroke: "lightgray"}];
+        // Array data points are stored, if passed locally
         this._datapts = [];
+        // Default template for tooltips
         this._template = '<div class="tooltip"><p>x: ${xx}</p><p>y: ${yy}</p></div>';
+        // Array of currently used ui elements
         this._uis = [];
+        // Whether or not to automatically rescale axes when UI changes
         this._autorescale = false;
-        this._updating = false; // to stop an infinite loop during UI changes
-        this._queryelem = {};
+        // Used to stop an infinite loop during UI changes
+        this._updating = false;
+        // Dict from local attr names to remote attr names for remote data
+        this._local2remote = {};
+        // the type parameter borrowed from R plots
         this._type = "p";
+        // post functions that are hooked after completion of plot
         this._postFns = [];
-
-        /* Construct Axes */
+        // must be true to refresh plot
         this._drawNow = false;
-	this.xAxis = new SVGPlotAxis(this); // The main x-axis
-	this.xAxis.title('X', 40);
-	this.yAxis = new SVGPlotAxis(this); // The main y-axis
-	this.yAxis.title('Y', 40);
-	this._drawNow = true;
     };
 
-    $.extend(SVGPlot.prototype, {
+    $.extend(SVGPlotCore.prototype, {
 	/* Useful indexes. */
 	X: 0, Y: 1, W: 2, H: 3,
         L: 0, T: 1, R: 2, B: 3,
@@ -71,6 +79,10 @@
 		    dims[this.H] / (this.yAxis._scale.max - this.yAxis._scale.min)];
 	},
 
+        /* Given some x and y coordinates (relative to axes)
+           it returns the svg coordinates.
+           @param x, y the coordinates relative to x and y units
+           @return either the array of respective coords or the single coord */
         _getSVGCoords: function(x, y) {
             if (arguments.length == 0) return;
             var dims = this._getDims();
@@ -83,6 +95,10 @@
             return (xco ? xco : yco);
         },
 
+        /* Exact inverse of _getSVGCoords. Converts SVG coordinates into
+           coordinates relative to axes units.
+           @params x,y the SVG coordinates to be converted to units
+           @return either the single coord or array depending on arguments */
         _getPlotCoords: function(x, y) {
             if (arguments.length == 0) return;
             var dims = this._getDims();
@@ -109,7 +125,7 @@
 	    }
             var isarray = (left && left.constructor == Array);
 	    this._area = (isarray ? left : [left, top, right, bottom]);
-	    this._initPlot();
+	    this._refreshPlot();
 	    return this;
 	},
 
@@ -129,7 +145,7 @@
 	    }
 	    this._areaFormat = $.extend({fill: fill},
 			                (stroke ? {stroke: stroke} : {}), settings || {});
-	    this._initPlot();
+	    this._refreshPlot();
 	    return this;
 	},
 
@@ -151,7 +167,7 @@
 	    if (this._gridlines[0] == null && this._gridlines[1] == null) {
 		this._gridlines = [];
 	    }
-	    this._initPlot();
+	    this._refreshPlot();
 	    return this;
 	},
 
@@ -178,13 +194,13 @@
 	    }
 	    this._title = {value: value, offset: offset || this._title.offset,
 			   settings: $.extend({textAnchor: 'middle'},
-			                      (colour ? {fill: colour} : {}), settings || {})};
-	    this._initPlot();
+                           (colour ? {fill: colour} : {}), settings || {})};
+	    this._refreshPlot();
 	    return this;
 	},
 
-	/* Set the template for the tooltips.
-	   @param  html - the html template to be used for jQuery templating
+	/* Set the jQuery template to be filled for tooltips.
+	   @param  html the html template to be rendered by jQuery templating
 	   @return  (SVGPlot) this plot object */
         template: function (html) {
             this._template = html;
@@ -276,21 +292,23 @@
 	    }
 	},
 
-	/* Draw the plot title - centred. */
+	/* Draw the plot title - centered. */
 	_drawTitle: function() {
 	    this._wrapper.text(this._plotCont, this._getValue(this._plotCont, 'width') / 2,
 			       this._title.offset, this._title.value, this._title.settings);
 	},
 
-	/* Plot datapoints. */
-        _drawScatterPlot: function (filterData) {
+	/* Make a scatterplot given the datapoints
+           @param filterData ([{..}]) an array of point objects to be plotted
+           @return none */
+        drawPlot: function (filterData) {
             this._datapointCont = this._wrapper.group(this._plot);
 	    var dims = this._getDims();
-            var pointR = Math.min(dims[this.W], dims[this.H])/150;
-            var x_attr = this._isRemote ? (this._queryelem.xx ? this._queryelem.xx.remote_attr : null) : "xx";
-            var y_attr = this._isRemote ? this._queryelem.yy.remote_attr : "yy";
-            var col_attr = (this._isRemote && this._queryelem.col) ? this._queryelem.col.remote_attr : "col";
-            var rad_attr = (this._isRemote && this._queryelem.rad) ? this._queryelem.rad.remote_attr : "rad";
+            var pointR = Math.min(dims[this.W], dims[this.H])/125;
+            var x_attr = this._isRemote ? (this._local2remote.xx ? this._local2remote.xx.remote_attr : null) : "xx";
+            var y_attr = this._isRemote ? this._local2remote.yy.remote_attr : "yy";
+            var col_attr = (this._isRemote && this._local2remote.col) ? this._local2remote.col.remote_attr : "col";
+            var rad_attr = (this._isRemote && this._local2remote.rad) ? this._local2remote.rad.remote_attr : "rad";
 
             function getPoint(pt, i) {
                 var drawPt = {
@@ -300,8 +318,8 @@
                     rad : (pt[rad_attr] || pointR),
                 };
                 if (this._isRemote) {
-                    for (var lattr in this._queryelem) {
-                        var rattr = this._queryelem[lattr].remote_attr;
+                    for (var lattr in this._local2remote) {
+                        var rattr = this._local2remote[lattr].remote_attr;
                         (!pt[rattr]) || (drawPt[lattr] = pt[rattr]);
                     }
                     return drawPt;
@@ -325,7 +343,9 @@
             }, this);
 	},
 
-	/* Show the current value status on hover. */
+	/* Show the rendered jQuery template on hover.
+           @param elem  svg element whose hover triggers template to appear
+           @param data  point to be used to plugin template */
 	_showStatus: function(elem, data) {
             if (!this._template) {
                 return;
@@ -337,8 +357,8 @@
                 var dims = self._getDims();
                 var toolcont = self._wrapper.group(self._plotCont, {class_: "point-metadata"});
                 var pos = [self._getValue(elem, "cx"), self._getValue(elem, "cy"), dims[self.W]/2, dims[self.H]/2];
-                var left = (pos[0] <= (dims[self.W]/2)) ? pos[0] : pos[0]-pos[2];
-                var top = (pos[1] <= (dims[self.H]/2)) ? pos[1] : pos[1]-pos[3];
+                var left = (pos[0] <= (dims[self.W]/2+dims[self.X])) ? pos[0] : pos[0]-pos[2];
+                var top = (pos[1] <= (dims[self.H]/2+dims[self.Y])) ? pos[1] : pos[1]-pos[3];
                 self._wrapper.rect(toolcont, left, top, pos[2], pos[3],
                                    {fill: 'white', stroke: data.col, strokeWidth: 3});
                 var temp = self._wrapper.foreignObject(toolcont, left, top, pos[2], pos[3]);
@@ -348,18 +368,26 @@
             });
 	},
 
-	/* Actually draw the plot (if allowed). */
-	_initPlot: function() {
+	/* Initiate refresh of the plot (if allowed). */
+	_refreshPlot: function() {
 	    if (!this._drawNow) {
 		return;
 	    }
+            if (this._isRemote) {
+                this._filterData(this._makePlot);
+            } else {
+                this._makePlot(this._filterData());
+            }
+        },
+
+        /* Completely wipe the svgplot clean */
+        _clearPlot: function () {
 	    while (this._plotCont.firstChild) {
 		this._plotCont.removeChild(this._plotCont.firstChild);
 	    }
 	    if (!this._plotCont.parent) {
 		this._wrapper._svg.appendChild(this._plotCont);
 	    }
-	    // Set sizes if not already there
 	    if (!this._plotCont.width) {
 		this._plotCont.setAttribute('width',
 				            parseInt(this._plotCont.getAttribute('width'), 10) || this._wrapper._width());
@@ -378,16 +406,16 @@
 	    } else {
 		this._plotCont.height = this._plotCont.height || this._wrapper._height();
 	    }
-            if (this._isRemote) {
-                this._filterData(this._makePlot);
-            } else {
-                this._makePlot(this._filterData());
-            }
         },
 
-        _makePlot: function (queriedData) {
-            (!this._autorescale) || this.resetAxes(queriedData);
-	    this._drawChartBackground();
+        /* Create plot given the selected data */
+        _makePlot: function (queriedData, resizeAxes) {
+            (arguments.length > 1) || (resizeAxes = this._autorescale);
+            queriedData || (queriedData = this._datapts);
+
+            this._clearPlot();
+            (!resizeAxes) || this.resetAxes(queriedData);
+            this._drawChartBackground();
             var uuid = new Date().getTime();
 	    var dims = this._getDims();
 	    var clip = this._wrapper.other(this._plotCont, 'clipPath', {id: 'clip' + uuid});
@@ -396,15 +424,17 @@
 	    this._drawAxis(true);
 	    this._drawAxis(false);
 	    this._drawTitle();
-            this._drawScatterPlot(queriedData);
+            this.drawPlot(queriedData);
             this._postFns.forEach(function(fn) {
                 fn.call(this, queriedData);
             }, this);
-	},
+        },
 
+        /* Clear all data and reset defaults */
         clearData: function () {
             this._datapts = [];
-            this._queryelem = {};
+            this._postFns = [];
+            this._local2remote = {};
             this._uis.forEach(function(ui) {ui.destroy();});
             this._uis = [];
             this._autorescale = false;
@@ -415,8 +445,7 @@
             return this;
         },
 
-        /* Rescale the axes based on what information is stored
-           as _datapts. */
+        /* Rescale xAxis and yAxis based on the data points to be plotted */
         resetAxes: function (datapts) {
             datapts || (datapts = this._datapts);
             var bounds = datapts.reduce(function(prev, curr) {
@@ -432,37 +461,41 @@
             this.yAxis.resize(bounds.yy[0], bounds.yy[1]);
         },
 
+        /* Method to initialize axes scale when data is stored on server */
         _setAxesRemote: function () {
             var self = this;
             this._drawNow = false;
-            $.getJSON("summary/"+this._queryelem.yy.remote_attr, function (ysum) {
+            $.getJSON("summary/"+this._local2remote.yy.remote_attr, function (ysum) {
                 self.yAxis.resize(ysum.range[0], ysum.range[1]);
-                if (self._queryelem.xx) {
-                    $.getJSON("summary/"+self._queryelem.xx.remote_attr, function (xsum) {
+                if (self._local2remote.xx) {
+                    $.getJSON("summary/"+self._local2remote.xx.remote_attr, function (xsum) {
                        self.xAxis.resize(xsum.range[0], xsum.range[1]);
-                       self.redraw();
+                       self.refresh();
                     });
                 } else {
                     self.xAxis.resize(1, ysum.count);
-                    self.redraw();
+                    self.refresh();
                 }
             });
         },
 
-	/* Redraw the entire plot with the current settings and values.
+	/* Refresh the entire plot with the current settings and values.
 	   @return  (SVGPlot) this plot object */
-	redraw: function() {
+	refresh: function() {
 	    this._drawNow = true;
-	    this._initPlot();
+	    this._refreshPlot();
 	    return this;
 	},
 
+        /* Method called from outside object to load the data and begin
+           the creation of the SVGPlot instance.
+           @param data   data passed in from jscliplot.js */
         loadData: function (data) {
             this.clearData();
             this._isRemote = !!data.remote;
-            this._autorescale = data.rescale;
+            this._autorescale = !!data.rescale;
             this._datapts = this._isRemote ? null : data.local;
-            this._queryelem = this._isRemote ? data.remote : {};
+            this._local2remote = this._isRemote ? data.remote : {};
             var uiFn = this._isRemote ? this._createRemoteUI : this._createLocalUI;
 
             (!data.postFns) || (this._postFns = data.postFns);
@@ -472,17 +505,22 @@
             (!data.ui)   || uiFn.call(this, data.ui, false);
             (!data.cui)  || uiFn.call(this, data.cui, true);
             if (this._autorescale) {
-                this.redraw()
+                this.refresh()
             } else {
                 if (this._isRemote) {
                     this._setAxesRemote();
                 } else {
                     this.resetAxes();
-                    this.redraw();
+                    this.refresh();
                 }
             }
         },
 
+        /* Function that initializes and creates UI object instances
+           that were passed in by the user if the data is stored
+           locally
+           @param uiobj   the object given by ui or cui in the invocation
+           @param ischild whether we are initializing child or parent ui*/
         _createLocalUI: function (uiobj, ischild) {
             if (uiobj.constructor == Object) {
                 for (var uitype in uiobj) {
@@ -499,6 +537,10 @@
             }
         },
 
+        /* Function that initializes and creates UI object instances
+           that were passed in by the user if the data is stored remotely
+           @param uiobj   the object given by ui or cui in the invocation
+           @param ischild whether we are initializing child or parent ui*/
         _createRemoteUI: function (uiobj, ischild) {
             var self = this, uitype;
             if (uiobj.constructor == Object) {
@@ -507,7 +549,7 @@
                         uiobj[uitype] = [uiobj[uitype]];
                     }
                     uiobj[uitype].forEach(function(local_attr) {
-                        var remote_attr = this._queryelem[local_attr].remote_attr;
+                        var remote_attr = this._local2remote[local_attr].remote_attr;
                         var _uitype = uitype;
                         $.getJSON("ui/"+remote_attr, function (metadata) {
                             var ui = new UISelector(self, _uitype, local_attr, remote_attr, ischild, metadata.reps);
@@ -521,14 +563,23 @@
             }
         },
 
+        /* Function responsible for actually selecting the data that meets
+           the UI criteria. This will also reset the UI elements as it filters
+           so that cui elements can update here as the filtering occurs.
+           Both remote and local cases are handled here for now
+           @param callback  if a callback function is supplied, this is what
+                  the selected data at the end is passed into. Otherwise
+                  the data is assumed to be stored locally.
+           @return the filtered points, but only explicitly if the data
+                   is held locally */
         _filterData: function (callback) {
             if (callback) {
                 var query = {}, attrs = {}, remote, self = this;
                 this._uis.filter(function(ui) {return (!ui._ischild)}).forEach(function (ui) {
                     query = $.extend(query, ui.filterRemote());
                 });
-                for (var lattr in this._queryelem) {
-                   if (remote = this._queryelem[lattr]) {
+                for (var lattr in this._local2remote) {
+                   if (remote = this._local2remote[lattr]) {
                         attrs[remote.remote_attr] = 1;
                     }
                 }
@@ -581,10 +632,27 @@
                 return;
             }
             this._updating = true;
-            this.redraw();
+            this.refresh();
             this._updating = false;
         },
     });
+
+    function SVGScatterPlot(wrapper) {
+        // The attached SVG wrapper object
+	this._wrapper = wrapper;
+        // The main container for the plot
+	this._plotCont = this._wrapper.svg(0, 0, 0, 0, {class_: 'svg-plot'});
+
+        /* Construct Axes */
+        this._drawNow = false;
+	this.xAxis = new SVGPlotAxis(this); // The main x-axis
+	this.xAxis.title('X', 40);
+	this.yAxis = new SVGPlotAxis(this); // The main y-axis
+	this.yAxis.title('Y', 40);
+	this._drawNow = true;
+    };
+
+    SVGScatterPlot.prototype = new SVGPlotCore();
 
     /* Details about each plot axis.
        @param  plot   (SVGPlot) the owning plot
@@ -619,7 +687,7 @@
 	    }
 	    this._scale.min = min;
 	    this._scale.max = max;
-	    this._plot._initPlot();
+	    this._plot._refreshPlot();
 	    return this;
 	},
 
@@ -642,7 +710,7 @@
 	    this._ticks.major = major;
 	    this._ticks.size = size || this._ticks.size;
 	    this._ticks.position = position || this._ticks.position;
-	    this._plot._initPlot();
+	    this._plot._refreshPlot();
 	    return this;
 	},
 
@@ -685,7 +753,7 @@
 	    if (colour || format) {
 		this._titleFormat = $.extend(format || {}, (colour ? {fill: colour} : {}));
 	    }
-	    this._plot._initPlot();
+	    this._plot._refreshPlot();
 	    return this;
 	},
 
@@ -703,7 +771,7 @@
 		colour = null;
 	    }
 	    this._labelFormat = $.extend(format || {}, (colour ? {fill: colour} : {}));
-	    this._plot._initPlot();
+	    this._plot._refreshPlot();
 	    return this;
 	},
 
@@ -723,11 +791,29 @@
 	    }
 	    $.extend(this._lineFormat, {stroke: colour, strokeWidth:
 			                width || this._lineFormat.strokeWidth}, settings || {});
-	    this._plot._initPlot();
+	    this._plot._refreshPlot();
 	    return this;
 	},
     });
 
+    /* The UISelector "class" contains most of the functionality necessary
+       for a UI element to interact with FilterView. Depending on its uitype,
+       it outsources some of its crucial methods to the UIMethods object
+       below this. That is what the uitype-specific code is contained.
+       @param svgplot  a reference to the svgplot to modify upon changes to UI state
+       @param uitype (string) the type of ui selector (checkbox, regexp, etc.)
+       @param local_attr  the name of what the data represented is called locally.
+              So if the user passed in {col: new RemoteData(..), ...} in the
+              options that was passed to jscliplot.plot, then col here is the
+              local_attr is what the data is named when arriving to the browser.
+              The remote_attr is what the data is called on the server.
+
+              For the case of locally stored data, local_attr is simply the key
+              of the value in the original options object and remote_attr is
+              irrelevant.
+       @param ischild (boolean) Whether or not the instance is a child ui or not.
+       @param datapts  An array of the data plucked from the datapts stored in the
+              svgplot object.*/
     function UISelector(svgplot, uitype, local_attr, remote_attr, ischild, datapts) {
         this._ui = null; // refence to ui DOM element
         this._svgplot = svgplot;
@@ -743,12 +829,9 @@
     };
 
     $.extend(UISelector.prototype, {
-        _range: function () {
-            return this._datapts.reduce(function(prev, curr) {
-                return [Math.min(curr, prev[0]), Math.max(curr, prev[1])];
-            }, [Infinity, -Infinity]);
-        },
-
+        /* Return the distinct set of values in an array
+           @param  data  list of data values
+           @return list of unique values from data */
         _distinctVals: function (data) {
             var seen = {}, uniq = [];
             data.forEach(function(val) {
@@ -760,10 +843,9 @@
             return uniq;
         },
 
-        // Introspection should provide with the data as number/int, number/float,
-        // or string. Right now we'll be content with checking only
-        // the first element, but later we'll want to check all probably (esp
-        // if there are any NAs)
+        /* Introspection should categorize the data as int, float, or its
+           type as specified by typeof. It will store this in this._params.type.
+           @return UISelector object */
         _introspect: function () {
             if (typeof this._datapts[0] === "number") {
                 var allints = this._datapts.every(function(val) {
@@ -776,6 +858,7 @@
             return this;
         },
 
+        /* Sort the data stored in this._datapts */
         _sortData: function () {
             if (typeof this._datapts[0] == "number") {
                 this._datapts = this._datapts.sort(function (a,b) {return a-b});
@@ -784,11 +867,13 @@
             this._datapts = this._datapts.sort();
         },
 
+        /* Remove UI element */
         destroy: function () {
             $(this._id).remove();
         },
 
-        // These are the parts only done once
+        /* Actually draw the UI element. This should only be called
+           once, when the UI element is intialized*/
         drawUI: function () {
             this._introspect()._sortData();
             UIMethods[this._uitype].assignParams.call(this);
@@ -796,15 +881,23 @@
             return this;
         },
 
+        /* Returns a boolean, which is true if and only if the point
+           meeting the criteria to be selected by this UI element.
+           @param pt this is a datapoint {...} to be filtered
+           @return (boolean) whether the UI element selects the point or not.*/
         filterLocal: function (pt) {
             return UIMethods[this._uitype].filterLocal.call(this, pt);
         },
 
+        /* Returns the MongoDB query corresponding to state of UI Element
+           @return UI's part to be integrated into MongoDB query on server */
         filterRemote: function () {
             return UIMethods[this._uitype].filterRemote.call(this);
         },
 
-        // These are the parts repeated each update
+        /* To be called when the domain of the UI needs to be reset. This is
+           typically only called when the UI element is a cui, and thus needs
+           to adapt based on the data that has survived the normal ui elements*/
         reset: function (filtereddata) {
             (!filtereddata) || (this._datapts = filtereddata);
             this._sortData();
@@ -812,6 +905,24 @@
         },
     });
 
+    /* The UIMethods object currently contains all the code for each type of
+       UI element. The this in these UI elements is bound to the instance
+       of that particular UI element type. Each type must contain five methods:
+        * assignParams = this is done to set this._params if necessary to
+                         build the UI element later. This is typically
+                         should be done right after the constructor has finished.
+        *     draw     = a one-time (usually) method to actually create the UI object.
+        * filterLocal  = In sync with the filterLocal of the UISelector object,
+                         this should return a boolean based on the state of the
+                         UI element and pt object passed to it.
+        * filterRemote = In sync with filterRemote, this method should return
+                         the part of the MongoDB query that this would normally
+                         correspond to. See MongoDB documentation and the examples
+                         below. This is only needed to make FilterView work with
+                         data stored on the server.
+        *     reset    = In sync with the UI Selector object, this resets
+                         the UI Selector object with regards to the data
+                         stored in this._datapts.*/
     UIMethods = {
         autocomplete: {
             assignParams: function () {
@@ -1073,6 +1184,10 @@
 
     };
 
+    /* Helper function to round floats
+       @param num the number to round off
+       @param d the number of decimal places to have
+       @return rounded decimal*/
     function roundDigits (num, d) {
         d || (d = 2);
         return (Math.round(Math.pow(10,d)*num)/Math.pow(10,d));
