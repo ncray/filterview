@@ -97,6 +97,12 @@ body {
     width: 50%;
 }
 
+.tooltip {
+    width: 100%;
+    padding-left: 10px;
+    padding-top: 5px;
+}
+
 .show {
     width: 40px;
     height: 15px;
