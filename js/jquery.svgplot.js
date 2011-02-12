@@ -458,14 +458,14 @@
 
             // Let axes handle edge cases (e.g. no datapts)
             this._drawNow = false;
-            this.xAxis.resize(bounds.xx[0], bounds.xx[1]);
-            this.yAxis.resize(bounds.yy[0], bounds.yy[1]);
+            this.xAxis.resize.apply(this.xAxis, bounds.xx);
+            this.yAxis.resize.apply(this.yAxis, bounds.yy);
         },
 
         /* Method to initialize axes scale when data is stored on server */
         _setAxesRemote: function () {
-            var self = this;
             this._drawNow = false;
+            var self = this;
             $.getJSON("summary/"+this._local2remote.yy.remote_attr, function (ysum) {
                 self.yAxis.resize(ysum.range[0], ysum.range[1]);
                 if (self._local2remote.xx) {
@@ -498,13 +498,26 @@
             this._datapts = this._isRemote ? null : data.local;
             this._local2remote = this._isRemote ? data.remote : {};
             var uiFn = this._isRemote ? this._createRemoteUI : this._createLocalUI;
+            var uipromises = [];
 
             (!data.postFns) || (this._postFns = data.postFns);
             (!data.type) || (this._type = data.type);
             (!data.xlab) || this.xAxis.title(data.xlab);
             (!data.ylab) || this.yAxis.title(data.ylab);
-            (!data.ui)   || uiFn.call(this, data.ui, false);
-            (!data.cui)  || uiFn.call(this, data.cui, true);
+            (!data.ui)   || uiFn.call(this, data.ui, false, uipromises);
+            (!data.cui)  || uiFn.call(this, data.cui, true, uipromises);
+            debugger;
+            if (uipromises.length) {
+                var self = this;
+                $.when($, uipromises).done(function() {
+                    self._prepAxes();
+                });
+                return;
+            }
+            this._prepAxes();
+        },
+
+        _prepAxes: function () {
             if (this._autorescale) {
                 this.refresh()
             } else {
@@ -542,7 +555,7 @@
            that were passed in by the user if the data is stored remotely
            @param uiobj   the object given by ui or cui in the invocation
            @param ischild whether we are initializing child or parent ui*/
-        _createRemoteUI: function (uiobj, ischild) {
+        _createRemoteUI: function (uiobj, ischild, uipromises) {
             var self = this, uitype;
             if (uiobj.constructor == Object) {
                 for (uitype in uiobj) {
@@ -552,13 +565,13 @@
                     uiobj[uitype].forEach(function(local_attr) {
                         var remote_attr = this._local2remote[local_attr].remote_attr;
                         var _uitype = uitype;
-                        $.getJSON("ui/"+remote_attr, function (metadata) {
+                        uipromises.push($.getJSON("ui/"+remote_attr).success(function (metadata) {
                             var ui = new UISelector(self, _uitype, local_attr, remote_attr, ischild, metadata.reps);
                             ui._params.type = metadata.datatype;
                             UIMethods[ui._uitype].assignParams.call(ui);
                             UIMethods[ui._uitype].draw.call(ui);
                             self._uis.push(ui);
-                        });
+                        }));
                     }, this);
                 }
             }
