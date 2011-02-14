@@ -375,9 +375,9 @@
 		return;
 	    }
             if (this._isRemote) {
-                this._filterData(this._makePlot);
+                this._filterDataRemotely(this._makePlot);
             } else {
-                this._makePlot(this._filterData());
+                this._makePlot(this._filterDataLocally());
             }
         },
 
@@ -506,7 +506,6 @@
             (!data.ylab) || this.yAxis.title(data.ylab);
             (!data.ui)   || uiFn.call(this, data.ui, false, uipromises);
             (!data.cui)  || uiFn.call(this, data.cui, true, uipromises);
-            debugger;
             if (uipromises.length) {
                 var self = this;
                 $.when($, uipromises).done(function() {
@@ -581,52 +580,53 @@
            the UI criteria. This will also reset the UI elements as it filters
            so that cui elements can update here as the filtering occurs.
            Both remote and local cases are handled here for now
-           @param callback  if a callback function is supplied, this is what
-                  the selected data at the end is passed into. Otherwise
-                  the data is assumed to be stored locally.
-           @return the filtered points, but only explicitly if the data
-                   is held locally */
-        _filterData: function (callback) {
-            if (callback) {
-                var query = {}, attrs = {}, remote, self = this;
-                this._uis.filter(function(ui) {return (!ui._ischild)}).forEach(function (ui) {
-                    query = $.extend(query, ui.filterRemote());
-                });
-                for (var lattr in this._local2remote) {
-                   if (remote = this._local2remote[lattr]) {
-                        attrs[remote.remote_attr] = 1;
-                    }
-                }
-                var cuis = this._uis.filter(function(ui) {return (ui._ischild)});
+           @param callback  this is what the selected data at the end
+                  is passed into. Otherwise the data is assumed to be
+                  stored locally. */
+        _filterDataRemotely: function (callback) {
+            var query = {}, cuis = [], self = this;
+            this._uis.forEach(function(ui) {
+                (ui._ischild) ? cuis.push(ui) : $.extend(query, ui.filterRemote());
+            });
+
+            function recursiveLoad() {
                 if (cuis.length) {
-                    var cui = cuis[0];
-                    $.ajax({url: "cui",
-                            type: "POST",
-                            dataType: "json",
-                            data: {"q": JSON.stringify(query), "f": cui._rattr},
-                            success: function (data) {
-                                cui.reset(data);
-                                query = $.extend(query, cui.filterRemote());
-                                $.ajax({url: "filter",
-                                        type: "POST",
-                                        dataType: "json",
-                                        data: {"q":JSON.stringify(query),"a":JSON.stringify(attrs)},
-                                        success: function (data) {
-                                            callback.call(self, data);
-                                        }});
-                                return;
-                            }});
-                    return;
-                }
-                $.ajax({url: "filter",
+                    var cui = cuis.shift();
+                    $.ajax({
+                        url:"cui",
                         type: "POST",
                         dataType: "json",
-                        data: {"q":JSON.stringify(query),"a":JSON.stringify(attrs)},
-                        success: function (data) {
-                            callback.call(self, data);
-                        }});
-                return;
-            }
+                        data: {"q":JSON.stringify(query),"f":cui._rattr}
+                    }).done(function(json) {
+                        cui.reset(json);
+                        $.extend(query, cui.filterRemote());
+                        recursiveLoad();
+                    });
+                } else {
+                    var attrs = {}, remote;
+                    for (var lattr in self._local2remote) {
+                        if (remote = self._local2remote[lattr]) {
+                            attrs[remote.remote_attr] = 1;
+                        }
+                    }
+                    $.ajax({
+                        url: "filter",
+                        type: "POST",
+                        dataType: "json",
+                        data: {"q":JSON.stringify(query),
+                               "a":JSON.stringify(attrs)}
+                    }).done(function(json) {
+                        callback.call(self, json);
+                    });
+                }
+            };
+            recursiveLoad();
+        },
+
+        /* Simple filter command that operates on locally held data
+           @param - none
+           @return [{}} - the points which passed the UI filter selections. */
+        _filterDataLocally: function () {
             var selectedPts = this._datapts;
             // since all child ui are last, this will update them based on parents
             this._uis.forEach(function (ui) {
@@ -641,6 +641,7 @@
             return selectedPts;
         },
 
+        /* Hook that is called when a UI element changes. */
         _UIChange: function () {
             if (this._updating) {
                 return;
@@ -1076,6 +1077,10 @@
                 var q = {}, ors = [];
                 for (var cat in this._params.checked) {
                     if (this._params.checked[cat]) {
+                        try {
+                            cat = JSON.parse(cat);
+                        } catch (err) {
+                        }
                         ors.push(cat);
                     }
                 }

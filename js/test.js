@@ -6,18 +6,33 @@
 
 require(["jscliplot"],
          function (jscliplot) {
-                // $.get("data/three_cluster.json", function (foo) {
-                //     var fncalls = {
-                //         'plot(foo.xx)': [foo.xx],
-                //         'plot(foo.xx, foo.yy)': [foo.xx, foo.yy],
-                //         'plot(foo.xx, foo.yy, {col: foo.col})': [foo.xx, foo.yy, {col: foo.col}],
-                //         'plot(foo.xx, foo.yy, {col: foo.col, ui:{checkbox:"col"}})' : [foo.xx, foo.yy, {col:foo.col, ui:{checkbox:"col"}}],
-                //         'plot(foo.xx, foo.yy, {col: foo.col, tt:foo.tt, ui:{slider:["tt", "yy"]}})' : [foo.xx, foo.yy, {col: foo.col, tt:foo.tt, ui:{slider:["tt","yy"]}}],
-                //         'plot(foo.xx, foo.yy, {col: foo.col, ui:{dropdown: "col"}})' : [foo.xx, foo.yy, {col: foo.col, ui:{dropdown: "col"}}],
-                //         'plot(foo.xx, foo.yy, {col: foo.col, ui:{autocomplete: "col"}})' : [foo.xx, foo.yy, {col: foo.col, ui:{autocomplete: "col"}}],
-                //         'plot(foo.xx, foo.yy, {col: foo.col, ui:{regexp: "col"}})' : [foo.xx, foo.yy, {col: foo.col, ui:{regexp: "col"}}],
-                //         'plot(foo.xx, foo.yy, {col:foo.col, tt:foo.tt, ui:{checkbox:"col",slider:"tt"}})' : [foo.xx, foo.yy, {col:foo.col, tt:foo.tt, ui:{checkbox:"col",slider:"tt"}}],
-                //     };
+             ////////////////////////
+             // Local Data Example //
+             ////////////////////////
+             // Uncomment code below to test, but make sure to:
+             // (1) Comment out all code from other data sources
+             // (2) Uncomment trailing }) at bottom of page
+
+             // $.get("data/three_cluster.json", function (foo) {
+             //     var fncalls = {
+             //         'plot(foo.xx)': [foo.xx],
+             //         'plot(foo.xx, foo.yy)': [foo.xx, foo.yy],
+             //         'plot(foo.xx, foo.yy, {col: foo.col})': [foo.xx, foo.yy, {col: foo.col}],
+             //         'plot(foo.xx, foo.yy, {col: foo.col, ui:{checkbox:"col"}})' : [foo.xx, foo.yy, {col:foo.col, ui:{checkbox:"col"}}],
+             //         'plot(foo.xx, foo.yy, {col: foo.col, tt:foo.tt, ui:{slider:["tt", "yy"]}})' : [foo.xx, foo.yy, {col: foo.col, tt:foo.tt, ui:{slider:["tt","yy"]}}],
+             //         'plot(foo.xx, foo.yy, {col: foo.col, ui:{dropdown: "col"}})' : [foo.xx, foo.yy, {col: foo.col, ui:{dropdown: "col"}}],
+             //         'plot(foo.xx, foo.yy, {col: foo.col, ui:{autocomplete: "col"}})' : [foo.xx, foo.yy, {col: foo.col, ui:{autocomplete: "col"}}],
+             //         'plot(foo.xx, foo.yy, {col: foo.col, ui:{regexp: "col"}})' : [foo.xx, foo.yy, {col: foo.col, ui:{regexp: "col"}}],
+             //         'plot(foo.xx, foo.yy, {col:foo.col, tt:foo.tt, ui:{checkbox:"col",slider:"tt"}})' : [foo.xx, foo.yy, {col:foo.col, tt:foo.tt, ui:{checkbox:"col",slider:"tt"}}],
+             //     };
+
+              ////////////////////////
+              // Another Local Data //
+              ////////////////////////
+              // Follow the same instructions up above to
+              // try out this data example. This illustrates
+              // the power of child ui elements and the rescale flag
+
              // $.get("data/fake_genome.json", function (foo) {
              //     var fncalls = {
              //         'plot(foo.pos, foo.coverage, {gene: foo.gene, exon: foo.exon, ui:{slider: "exon", autocomplete: "gene"}})' : [foo.pos, foo.coverage, {gene: foo.gene, exon: foo.exon, ui:{autocomplete: "gene", slider: "exon"}}],
@@ -28,6 +43,7 @@ require(["jscliplot"],
              ////////////////////
              // Remote Example //
              ////////////////////
+
              function RemoteData (db, remote_attr) {
                  this.db = db;
                  this.remote_attr = remote_attr;
@@ -75,12 +91,16 @@ require(["jscliplot"],
                  'plot(foo.xx, foo.yy, {col: foo.col, tt:foo.tt, ui:{slider:["tt", "yy"]}})' : [foo.xx, foo.yy, {col: foo.col, tt:foo.tt, ui:{slider:["tt","yy"]}}],
                  'plot(foo.xx, foo.yy, {col: foo.col, ui:{dropdown: "col"}})' : [foo.xx, foo.yy, {col: foo.col, ui:{dropdown: "col"}}],
                  'plot(foo.xx, foo.yy, {col: foo.col, ui:{autocomplete: "col"}})' : [foo.xx, foo.yy, {col: foo.col, ui:{autocomplete: "col"}}],
+                 'plot(foo.xx, foo.yy, {col: foo.col, tt:foo.tt, ui:{slider: "yy"}, cui:{checkbox:["tt","col"]}})' : [foo.xx, foo.yy, {col: foo.col, tt:foo.tt, ui:{slider: "yy"}, cui:{checkbox:["tt","col"]}}],
                  'plot(foo.xx, foo.yy, {col: foo.col, rescale: true, ui:{regexp: "col"}})' : [foo.xx, foo.yy, {col: foo.col, rescale: true, ui:{regexp: "col"}}],
                  'plot(foo.xx, foo.yy, {col:foo.col, tt:foo.tt, ui:{checkbox:"col",slider:"tt"}})' : [foo.xx, foo.yy, {col:foo.col, tt:foo.tt, ui:{checkbox:"col",slider:"tt"}}],
                  'plot(foo.xx, foo.yy, {col: foo.col, tt:foo.tt, ui:{slider:"xx"}, cui:{autocomplete:"col"}})' : [foo.xx, foo.yy, {col: foo.col, tt:foo.tt, ui:{slider:"xx"}, cui:{autocomplete:"col"}}],
                  'plot(foo.yy, {col: foo.col, type:"o", postFns:[drawCLs], ui:{checkbox:"col"}})' : [foo.yy, {col:foo.col, type:"o", postFns: [drawCLs], ui:{checkbox:"col"}}],
              };
 
+             //////////////////////////////////
+             // Always leave for page layout //
+             //////////////////////////////////
              var svgtmpl = '<div id="${id}" class="right_half"></div>';
              var uitmpl  = '<div id="${id}" class="left_half"></div>';
              var uihead = '<div class="command"><h2>#${i} Command: ${cmd}</h2></div>';
@@ -100,5 +120,9 @@ require(["jscliplot"],
                  $('<div class="clear"></div>').appendTo(cont);
                  i++;
              }
-//                            });
+
          });
+// This final }) might need to be included
+// or excluded depending on if you are doing an
+// AJAX call or not (if you are you need it).
+//         });

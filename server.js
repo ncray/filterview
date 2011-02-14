@@ -149,6 +149,10 @@ app.post('/cui', function (req, res) {
     db.collection("three_cluster", function (err, coll) {
         coll.find(uiquery, function (err, cursor) {
             cursor.nextObject(function(err, sample) {
+                if (sample === null) {
+                    res.send(null);
+                    return;
+                }
                 var ex = sample[field];
                 if (isFloat(ex)) {
                     coll.find(uiquery, {attr:1, "sort":[[attr, 1]]}, function (err, cursor2) {
