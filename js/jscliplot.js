@@ -2,7 +2,7 @@
 // Authors: Jackson Gorham
 // Email: jacksongorham@gmail.com
 
-define(["order!thirdparty/jquery-1.5.min.js", "order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/ui/jquery-ui-1.8.7.custom.js", "order!thirdparty/jquery.svg.js", "order!js/jquery.svgplot.js"], function() {
+define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/ui/jquery-ui-1.8.7.custom.js", "order!thirdparty/jquery.svg.js", "order!js/jquery.svgplot.js"], function() {
     /* Store svgplot reference */
     var svgplot;
 

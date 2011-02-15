@@ -1199,26 +1199,53 @@
             },
             draw: function () {
                 var self = this, initval;
-                $.tmpl('<div class="${_class}"><label>${_lattr}</label><input/></div>', this).appendTo(this._slavecont);
-                this._ui = $('<div style="margin: 15px"></div>').appendTo(this._id);
-                this._params.weight = $(this._id+" input");
+                var onevaltemp = '<div class="${_class}"><label>${_lattr}: </label><input/></div>';
+                var twovaltemp = '<div class="${_class}"><label>${_lattr}: From</label><input/><label> To</label><input/></div>';
+
                 if (this._params.values) {
-                    initval = [this._params.min, this._params.max].map(roundDigits).join(" to ");
+                    $.tmpl(twovaltemp, this).appendTo(this._slavecont);
+                    this._ui = $('<div style="margin: 15px;"></div>').appendTo(this._id);
+                    this._params.from = $(this._id+" input:eq(0)").blur(function() {
+                        self._ui.slider("option", "values", [$(this).val(), self._params.to.val()]);
+                    });
+                    this._params.to = $(this._id+" input:eq(1)").blur(function() {
+                        self._ui.slider("option", "values", [self._params.from.val(), $(this).val()]);
+                    });
+                    initval = [this._params.min, this._params.max].map(roundDigits);
                     this._params.change = function (event, ui) {
-                        var value = ui.values.map(roundDigits).join(" to ");
-                        self._params.weight.val(value);
+                        var value = ui.values;
+                        self._params.from.val(value[0]);
+                        self._params.to.val(value[1]);
                         self._svgplot._UIChange();
                     };
                 } else {
+                    $.tmpl(onevaltemp, this).appendTo(this._slavecont);
+                    this._ui = $('<div style="margin: 15px;"></div>').appendTo(this._id);
+                    this._params.exact = $(this._id+" input").blur(function() {
+                        var value, userio = $(this).val();
+                        if (self._params.labels) {
+                            value = self._params.labels.indexOf(userio);
+                            value = Math.max(0, value); // if missing place at 0
+                            self._ui.slider("option", "value", value);
+                        } else {
+                            value = parseInt(userio);
+                            self._ui.slider("option", "value", value);
+                        }
+                    });
                     initval = this._params.labels ? this._params.labels[this._params.min] : this._params.min;
                     this._params.change = function (event, ui) {
                         var value = self._params.labels ? self._params.labels[ui.value] : ui.value;
-                        self._params.weight.val(value);
+                        self._params.exact.val(value);
                         self._svgplot._UIChange();
                     };
                 }
                 this._ui.slider(this._params);
-                this._params.weight.val(initval);
+                if (initval.constructor == Array) {
+                    this._params.from.val(initval[0]);
+                    this._params.to.val(initval[1]);
+                } else {
+                    this._params.exact.val(initval);
+                }
             },
             filterLocal: function (pt) {
                 if (this._params.values) {
@@ -1259,12 +1286,13 @@
                     }
                     vals = vals.map(roundDigits);
                     this._ui.slider("values", vals);
-                    this._params.weight.val(vals.join(" to "));
+                    this._params.from.val(vals[0]);
+                    this._params.to.val(vals[1]);
                 } else {
                     val = this._ui.slider("value");
                     if ((val < min) || (val > max)) {
                         this._ui.slider("value", roundDigits(min));
-                        this._params.weight.val(roundDigits(min));
+                        this._params.exact.val(roundDigits(min));
                     }
                 }
                 this._ui.slider("option", "min", min);

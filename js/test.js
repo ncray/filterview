@@ -4,8 +4,8 @@
 //
 // It is invoked by the require script tag in the index.html
 
-require(["jscliplot"],
-         function (jscliplot) {
+require(["order!thirdparty/jquery-1.5.min.js", "order!jscliplot"],
+        function (_, jscliplot) {
              ////////////////////////
              // Local Data Example //
              ////////////////////////
