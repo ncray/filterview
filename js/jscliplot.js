@@ -194,6 +194,10 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
                 svgplot.plot.loadData(data);
             }
         },
+        hist: function () {
+            var data = zipParams({xx:arguments[0]}, {});
+            svgplot.hist.loadData(data);
+        },
         /* Used to set the template of the SVGPlot object */
         template: function(temp) {
             svgplot.plot.template(temp);

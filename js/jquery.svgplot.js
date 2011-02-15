@@ -8,6 +8,7 @@
 (function($, undefined) {
     /* hook to plug this into jquery svg */
     $.svg.addExtension('plot', SVGScatterPlot);
+    $.svg.addExtension('hist', SVGHistogram);
 
     function SVGPlotCore() {
         // id of div to insert UI elements into
@@ -374,9 +375,9 @@
 		return;
 	    }
             if (this._isRemote) {
-                this._filterData(this._makePlot);
+                this._filterDataRemotely(this._makePlot);
             } else {
-                this._makePlot(this._filterData());
+                this._makePlot(this._filterDataLocally());
             }
         },
 
@@ -457,14 +458,14 @@
 
             // Let axes handle edge cases (e.g. no datapts)
             this._drawNow = false;
-            this.xAxis.resize(bounds.xx[0], bounds.xx[1]);
-            this.yAxis.resize(bounds.yy[0], bounds.yy[1]);
+            this.xAxis.resize.apply(this.xAxis, bounds.xx);
+            this.yAxis.resize.apply(this.yAxis, bounds.yy);
         },
 
         /* Method to initialize axes scale when data is stored on server */
         _setAxesRemote: function () {
-            var self = this;
             this._drawNow = false;
+            var self = this;
             $.getJSON("summary/"+this._local2remote.yy.remote_attr, function (ysum) {
                 self.yAxis.resize(ysum.range[0], ysum.range[1]);
                 if (self._local2remote.xx) {
@@ -497,13 +498,25 @@
             this._datapts = this._isRemote ? null : data.local;
             this._local2remote = this._isRemote ? data.remote : {};
             var uiFn = this._isRemote ? this._createRemoteUI : this._createLocalUI;
+            var uipromises = [];
 
             (!data.postFns) || (this._postFns = data.postFns);
             (!data.type) || (this._type = data.type);
             (!data.xlab) || this.xAxis.title(data.xlab);
             (!data.ylab) || this.yAxis.title(data.ylab);
-            (!data.ui)   || uiFn.call(this, data.ui, false);
-            (!data.cui)  || uiFn.call(this, data.cui, true);
+            (!data.ui)   || uiFn.call(this, data.ui, false, uipromises);
+            (!data.cui)  || uiFn.call(this, data.cui, true, uipromises);
+            if (uipromises.length) {
+                var self = this;
+                $.when($, uipromises).done(function() {
+                    self._prepAxes();
+                });
+                return;
+            }
+            this._prepAxes();
+        },
+
+        _prepAxes: function () {
             if (this._autorescale) {
                 this.refresh()
             } else {
@@ -541,7 +554,7 @@
            that were passed in by the user if the data is stored remotely
            @param uiobj   the object given by ui or cui in the invocation
            @param ischild whether we are initializing child or parent ui*/
-        _createRemoteUI: function (uiobj, ischild) {
+        _createRemoteUI: function (uiobj, ischild, uipromises) {
             var self = this, uitype;
             if (uiobj.constructor == Object) {
                 for (uitype in uiobj) {
@@ -551,13 +564,13 @@
                     uiobj[uitype].forEach(function(local_attr) {
                         var remote_attr = this._local2remote[local_attr].remote_attr;
                         var _uitype = uitype;
-                        $.getJSON("ui/"+remote_attr, function (metadata) {
+                        uipromises.push($.getJSON("ui/"+remote_attr).success(function (metadata) {
                             var ui = new UISelector(self, _uitype, local_attr, remote_attr, ischild, metadata.reps);
                             ui._params.type = metadata.datatype;
                             UIMethods[ui._uitype].assignParams.call(ui);
                             UIMethods[ui._uitype].draw.call(ui);
                             self._uis.push(ui);
-                        });
+                        }));
                     }, this);
                 }
             }
@@ -567,52 +580,53 @@
            the UI criteria. This will also reset the UI elements as it filters
            so that cui elements can update here as the filtering occurs.
            Both remote and local cases are handled here for now
-           @param callback  if a callback function is supplied, this is what
-                  the selected data at the end is passed into. Otherwise
-                  the data is assumed to be stored locally.
-           @return the filtered points, but only explicitly if the data
-                   is held locally */
-        _filterData: function (callback) {
-            if (callback) {
-                var query = {}, attrs = {}, remote, self = this;
-                this._uis.filter(function(ui) {return (!ui._ischild)}).forEach(function (ui) {
-                    query = $.extend(query, ui.filterRemote());
-                });
-                for (var lattr in this._local2remote) {
-                   if (remote = this._local2remote[lattr]) {
-                        attrs[remote.remote_attr] = 1;
-                    }
-                }
-                var cuis = this._uis.filter(function(ui) {return (ui._ischild)});
+           @param callback  this is what the selected data at the end
+                  is passed into. Otherwise the data is assumed to be
+                  stored locally. */
+        _filterDataRemotely: function (callback) {
+            var query = {}, cuis = [], self = this;
+            this._uis.forEach(function(ui) {
+                (ui._ischild) ? cuis.push(ui) : $.extend(query, ui.filterRemote());
+            });
+
+            function recursiveLoad() {
                 if (cuis.length) {
-                    var cui = cuis[0];
-                    $.ajax({url: "cui",
-                            type: "POST",
-                            dataType: "json",
-                            data: {"q": JSON.stringify(query), "f": cui._rattr},
-                            success: function (data) {
-                                cui.reset(data);
-                                query = $.extend(query, cui.filterRemote());
-                                $.ajax({url: "filter",
-                                        type: "POST",
-                                        dataType: "json",
-                                        data: {"q":JSON.stringify(query),"a":JSON.stringify(attrs)},
-                                        success: function (data) {
-                                            callback.call(self, data);
-                                        }});
-                                return;
-                            }});
-                    return;
-                }
-                $.ajax({url: "filter",
+                    var cui = cuis.shift();
+                    $.ajax({
+                        url:"cui",
                         type: "POST",
                         dataType: "json",
-                        data: {"q":JSON.stringify(query),"a":JSON.stringify(attrs)},
-                        success: function (data) {
-                            callback.call(self, data);
-                        }});
-                return;
-            }
+                        data: {"q":JSON.stringify(query),"f":cui._rattr}
+                    }).done(function(json) {
+                        cui.reset(json);
+                        $.extend(query, cui.filterRemote());
+                        recursiveLoad();
+                    });
+                } else {
+                    var attrs = {}, remote;
+                    for (var lattr in self._local2remote) {
+                        if (remote = self._local2remote[lattr]) {
+                            attrs[remote.remote_attr] = 1;
+                        }
+                    }
+                    $.ajax({
+                        url: "filter",
+                        type: "POST",
+                        dataType: "json",
+                        data: {"q":JSON.stringify(query),
+                               "a":JSON.stringify(attrs)}
+                    }).done(function(json) {
+                        callback.call(self, json);
+                    });
+                }
+            };
+            recursiveLoad();
+        },
+
+        /* Simple filter command that operates on locally held data
+           @param - none
+           @return [{}} - the points which passed the UI filter selections. */
+        _filterDataLocally: function () {
             var selectedPts = this._datapts;
             // since all child ui are last, this will update them based on parents
             this._uis.forEach(function (ui) {
@@ -627,6 +641,7 @@
             return selectedPts;
         },
 
+        /* Hook that is called when a UI element changes. */
         _UIChange: function () {
             if (this._updating) {
                 return;
@@ -653,6 +668,77 @@
     };
 
     SVGScatterPlot.prototype = new SVGPlotCore();
+
+    function SVGHistogram (wrapper) {
+        // The attached SVG wrapper object
+	this._wrapper = wrapper;
+        // The main container for the plot
+	this._plotCont = this._wrapper.svg(0, 0, 0, 0, {class_: 'svg-plot'});
+        this._gridlines = [{stroke: "lightgray"}, null];
+
+        /* Construct Axes */
+        this._drawNow = false;
+	this.xAxis = new SVGPlotAxis(this); // The main x-axis
+	this.xAxis.title('X', 40);
+	this.yAxis = new SVGPlotAxis(this); // The main y-axis
+	this.yAxis.title('Freq', 40);
+	this._drawNow = true;
+    };
+
+    SVGHistogram.prototype = new SVGPlotCore();
+
+    $.extend(SVGHistogram.prototype, {
+        _numBins: function (n) {
+            return (n < 30) ? Math.floor(Math.sqrt(n))+1 : Math.floor(Math.log(n)/Math.log(2)+2);
+        },
+        _dropIntoBuckets: function (datapts) {
+            this._bins = [];
+            datapts || (datapts = this._datapts);
+            var xbound = datapts.reduce(function(prev, curr) {
+                return [Math.min(prev[0],curr.xx), Math.max(prev[1], curr.xx)];
+            }, [Infinity, -Infinity]).map(roundDigits);
+            var numbins = this._numBins(datapts.length);
+            var binsize = (xbound[1] - xbound[0])/numbins;
+            for (var bot = xbound[0]; bot < xbound[1]; bot+=binsize) {
+                this._bins.push([bot, bot+binsize, 0]);
+            }
+            datapts.forEach(function(val) {
+                var i = Math.floor((val.xx-xbound[0])/binsize);
+                i = Math.min(i, numbins-1);
+                i = Math.max(i, 0);
+                this._bins[i][2]++;
+            }, this);
+        },
+        _maxCount: function () {
+            var counts = this._bins.map(function(bin) {return bin[2]});
+            return Math.max.apply(Math, counts);
+        },
+        resetAxes: function (datapts) {
+            datapts || (datapts = this._datapts);
+            this._dropIntoBuckets(datapts);
+            var numbins = this._bins.length;
+            var maxcount = this._maxCount();
+
+            // Let axes handle edge cases (e.g. no datapts)
+            this._drawNow = false;
+            this.xAxis._numTicks = numbins;
+            this.xAxis.resize(this._bins[0][0], this._bins[numbins-1][1]);
+            this.yAxis.resize(0, maxcount);
+        },
+        drawPlot: function (filterData) {
+            this._datapointCont = this._wrapper.group(this._plot);
+            this._dropIntoBuckets(filterData);
+            var maxcount = this._maxCount();
+            this._bins.forEach(function(bin, i) {
+                var topleft = this._getSVGCoords(bin[0], bin[2]);
+                var bottomright = this._getSVGCoords(bin[1], 0);
+                var w = bottomright[0] - topleft[0];
+                var h = bottomright[1] - topleft[1];
+                this._wrapper.rect(this._datapointCont, topleft[0], topleft[1], w, h, {
+                    fill: "blue", color: "black", strokeWidth: "5px"});
+            }, this);
+        },
+    });
 
     /* Details about each plot axis.
        @param  plot   (SVGPlot) the owning plot
@@ -991,6 +1077,10 @@
                 var q = {}, ors = [];
                 for (var cat in this._params.checked) {
                     if (this._params.checked[cat]) {
+                        try {
+                            cat = JSON.parse(cat);
+                        } catch (err) {
+                        }
                         ors.push(cat);
                     }
                 }
@@ -1098,37 +1188,70 @@
                         value : this._params.min,
                     };
                 } else if (this._params.type == "float") {
+                    var min, max, range, step;
+                    range = this._datapts[this._datapts.length-1] - this._datapts[0];
+                    step = Math.pow(10, Math.floor(Math.log(range)/Math.log(10)));
+                    step = step/100;
+                    min = Math.floor(this._datapts[0]/step)*step;
+                    max = Math.ceil(this._datapts[this._datapts.length-1]/step)*step;
                     this._params = {
-                        min : this._datapts[0],
-                        max : this._datapts[this._datapts.length-1],
+                        min : min,
+                        max : max,
                         range : true,
+                        step: step,
+                        values: [min, max]
                     };
-                    this._params.values = [this._params.min, this._params.max];
-                    this._params.step = (this._params.max - this._params.min)/100;
                 }
             },
             draw: function () {
                 var self = this, initval;
-                $.tmpl('<div class="${_class}"><label>${_lattr}</label><input/></div>', this).appendTo(this._slavecont);
-                this._ui = $('<div style="margin: 15px"></div>').appendTo(this._id);
-                this._params.weight = $(this._id+" input");
+                var onevaltemp = '<div class="${_class}"><label>${_lattr}: </label><input/></div>';
+                var twovaltemp = '<div class="${_class}"><label>${_lattr}: From</label><input/><label> To</label><input/></div>';
+
                 if (this._params.values) {
-                    initval = [this._params.min, this._params.max].map(roundDigits).join(" to ");
+                    $.tmpl(twovaltemp, this).appendTo(this._slavecont);
+                    this._ui = $('<div style="margin: 15px;"></div>').appendTo(this._id);
+                    this._params.from = $(this._id+" input:eq(0)").blur(function() {
+                        self._ui.slider("option", "values", [$(this).val(), self._params.to.val()]);
+                    });
+                    this._params.to = $(this._id+" input:eq(1)").blur(function() {
+                        self._ui.slider("option", "values", [self._params.from.val(), $(this).val()]);
+                    });
+                    initval = [this._params.min, this._params.max].map(roundDigits);
                     this._params.change = function (event, ui) {
-                        var value = ui.values.map(roundDigits).join(" to ");
-                        self._params.weight.val(value);
+                        var value = ui.values;
+                        self._params.from.val(value[0]);
+                        self._params.to.val(value[1]);
                         self._svgplot._UIChange();
                     };
                 } else {
+                    $.tmpl(onevaltemp, this).appendTo(this._slavecont);
+                    this._ui = $('<div style="margin: 15px;"></div>').appendTo(this._id);
+                    this._params.exact = $(this._id+" input").blur(function() {
+                        var value, userio = $(this).val();
+                        if (self._params.labels) {
+                            value = self._params.labels.indexOf(userio);
+                            value = Math.max(0, value); // if missing place at 0
+                            self._ui.slider("option", "value", value);
+                        } else {
+                            value = parseInt(userio);
+                            self._ui.slider("option", "value", value);
+                        }
+                    });
                     initval = this._params.labels ? this._params.labels[this._params.min] : this._params.min;
                     this._params.change = function (event, ui) {
                         var value = self._params.labels ? self._params.labels[ui.value] : ui.value;
-                        self._params.weight.val(value);
+                        self._params.exact.val(value);
                         self._svgplot._UIChange();
                     };
                 }
                 this._ui.slider(this._params);
-                this._params.weight.val(initval);
+                if (initval.constructor == Array) {
+                    this._params.from.val(initval[0]);
+                    this._params.to.val(initval[1]);
+                } else {
+                    this._params.exact.val(initval);
+                }
             },
             filterLocal: function (pt) {
                 if (this._params.values) {
@@ -1169,12 +1292,13 @@
                     }
                     vals = vals.map(roundDigits);
                     this._ui.slider("values", vals);
-                    this._params.weight.val(vals.join(" to "));
+                    this._params.from.val(vals[0]);
+                    this._params.to.val(vals[1]);
                 } else {
                     val = this._ui.slider("value");
                     if ((val < min) || (val > max)) {
                         this._ui.slider("value", roundDigits(min));
-                        this._params.weight.val(roundDigits(min));
+                        this._params.exact.val(roundDigits(min));
                     }
                 }
                 this._ui.slider("option", "min", min);
