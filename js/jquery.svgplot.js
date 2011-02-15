@@ -1188,13 +1188,19 @@
                         value : this._params.min,
                     };
                 } else if (this._params.type == "float") {
+                    var min, max, range, step;
+                    range = this._datapts[this._datapts.length-1] - this._datapts[0];
+                    step = Math.pow(10, Math.floor(Math.log(range)/Math.log(10)));
+                    step = step/100;
+                    min = Math.floor(this._datapts[0]/step)*step;
+                    max = Math.ceil(this._datapts[this._datapts.length-1]/step)*step;
                     this._params = {
-                        min : this._datapts[0],
-                        max : this._datapts[this._datapts.length-1],
+                        min : min,
+                        max : max,
                         range : true,
+                        step: step,
+                        values: [min, max]
                     };
-                    this._params.values = [this._params.min, this._params.max];
-                    this._params.step = (this._params.max - this._params.min)/100;
                 }
             },
             draw: function () {
