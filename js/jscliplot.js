@@ -4,7 +4,7 @@
 
 define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/ui/jquery-ui-1.8.7.custom.js", "order!thirdparty/jquery.svg.js", "order!js/jquery.svgplot.js"], function() {
     /* Store svgplot reference */
-    var svgplot;
+    var svgplot, uidiv, _template;
 
     /* Try to parse any argument thats a string */
     function evalArg(arg) {
@@ -152,11 +152,16 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
         createSVGPlot: function (svg_id, ui_id) {
             $(svg_id).svg();
             svgplot = $(svg_id).svg('get');
-            svgplot.plot._slavecont = ui_id;
+            uidiv = ui_id;
         },
         /* The R like plot function */
         plot: function () {
             var xx, yy, opts, data, args = Array.prototype.slice.call(arguments);
+            svgplot.plot._slavecont = uidiv;
+            if (_template) {
+                svgplot.plot.template(_template);
+                _template = null;
+            }
             switch (args.length) {
             case 0:
                 return;
@@ -195,12 +200,21 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
             }
         },
         hist: function () {
-            var data = zipParams({xx:arguments[0]}, {});
-            svgplot.hist.loadData(data);
+            var xx, opts, data;
+            if (!arguments.length) return;
+            svgplot.hist._slavecont = uidiv;
+            if (_template) {
+                svgplot.hist.template(_template);
+                _template = null;
+            }
+            xx = arguments[0];
+            opts = (arguments[1] || {});
+            data = zipParams({xx:xx}, opts);
+            (!data) || svgplot.hist.loadData(data);
         },
         /* Used to set the template of the SVGPlot object */
         template: function(temp) {
-            svgplot.plot.template(temp);
+            _template = temp;
         },
     };
 });

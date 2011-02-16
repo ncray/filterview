@@ -8,7 +8,7 @@ var util    = require('util'),
     Server  = require('mongodb').Server,
     BSON    = require('mongodb').BSONNative;
 
-var homefile   = "./test.html",
+var homefile   = (process.argv[2] || "./unit/plotlocal.html"),
     host       = "localhost",
     port       = 8000,
     fileserver = new nstatic.Server({cache: false});
@@ -155,10 +155,10 @@ app.post('/cui', function (req, res) {
                 }
                 var ex = sample[field];
                 if (isFloat(ex)) {
-                    coll.find(uiquery, {attr:1, "sort":[[attr, 1]]}, function (err, cursor2) {
+                    coll.find(uiquery, {field:1, "sort":[[field, 1]]}, function (err, cursor2) {
                         cursor2.nextObject(function (err, first) {
                             params.push(first[field]);
-                            coll.find(uiquery, {attr:1, "sort":[[attr, -1]]}, function (err, cursor3) {
+                            coll.find(uiquery, {field:1, "sort":[[field, -1]]}, function (err, cursor3) {
                                 cursor3.nextObject(function(err, last) {
                                     params.push(last[field]);
                                     res.send(params);

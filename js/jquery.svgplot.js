@@ -1060,9 +1060,9 @@
                 UIMethods.checkbox.reset.call(this); // you call assignParms twice, but no harm
             },
             filterLocal: function (pt) {
-                if (this._params.type == "Float") {
+                if (this._params.type == "float") {
                     var val = pt[this._lattr];
-                    for (var i=0; i<this._params.labels.length; i++) {
+                    for (var i = 0; i < this._params.labels.length; i++) {
                         var interval = this._params.labels[i];
                         if (val <= interval[1]) {
                             return this._params.checked[interval.toString()];
@@ -1072,19 +1072,28 @@
                     return this._params.checked[pt[this._lattr]];
                 }
             },
-            // Doesn't work for Float type yet
             filterRemote: function () {
-                var q = {}, ors = [];
+                var q = {}, ors = [], key = this._rattr;
                 for (var cat in this._params.checked) {
                     if (this._params.checked[cat]) {
-                        try {
-                            cat = JSON.parse(cat);
-                        } catch (err) {
+                        if (this._params.type == "integer") {
+                            cat = parseInt(cat);
                         }
-                        ors.push(cat);
+                        if (this._params.type == "float") {
+                            var ss = cat.split(",").map(parseFloat);
+                            var or = {};
+                            or[key] = {"$gte":ss[0], "$lte":ss[1]};
+                            ors.push(or);
+                        } else {
+                            ors.push(cat);
+                        }
                     }
                 }
-                q[this._rattr] = {"$in": ors};
+                if (this._params.type != "float") {
+                    q[key] = {"$in": ors};
+                } else {
+                    q["$or"] = ors;
+                }
                 return q;
             },
             reset: function () {
@@ -1113,7 +1122,7 @@
             },
             draw: function () {
                 var self = this, select;
-                this._ui = $.tmpl('<div class="${_class}"><select></select></div>', this).appendTo(this._slavecont);
+                this._ui = $.tmpl('<div class="${_class}">${_lattr}: <select></select></div>', this).appendTo(this._slavecont);
                 select = $(this._id+" select");
                 this._params.labels.forEach(function(lbl) {
                     $.tmpl('<option value="${lbl}">${lbl}</option>', {lbl: lbl}).appendTo(select);
@@ -1123,24 +1132,38 @@
                 });
             },
             filterLocal: function (pt) {
+                var selected = $(this._id+" option:selected").val();
                 if (this._params.type == "float") {
-                    var bound = this._ui.val().split(',').map(parseFloat);
+                    var bound = selected.split(',').map(parseFloat);
                     return ((pt[this._lattr] >= bound[0]) && (pt[this._lattr] <= bound[1]));
                 }
-                return (pt[this._lattr] == $(this._id+" option:selected").val());
+                return (pt[this._lattr] == selected);
             },
-            // Doesn't work for Float yet
             filterRemote: function () {
                 var q = {};
-                q[this._rattr] = $(this._id+" option:selected").val();
+                var select = $(this._id+" option:selected").val();
+                if (this._params.type != "float") {
+                    if (this._params.type == "integer") select = parseInt(select);
+                    q[this._rattr] = select;
+                } else {
+                    var lims = select.split(",").map(parseFloat);
+                    q[this._rattr] = {"$gte":lims[0], "$lte":lims[1]};
+                }
                 return q;
             },
             reset: function () {
                 var select = $(this._id+" select");
+                var prev = $(this._id+" option:selected").val();
+                UIMethods.checkbox.assignParams.call(this);
                 select.children().remove();
                 this._params.labels.forEach(function(lbl) {
                     $.tmpl('<option value="${lbl}">${lbl}</option>', {lbl: lbl}).appendTo(select);
                 });
+                if (this._params.type == "integer") {
+                    prev = parseInt(prev);
+                }
+                prev = (this._params.labels.indexOf(prev) !== -1) ? prev : this._params.labels[0];
+                select.val(prev);
             },
         },
         regexp: {
@@ -1180,11 +1203,12 @@
                         range : "min",
                         value : this._params.min,
                     };
-                    this._params.max = this._params.labels.length - 1;
+                    this._params.max = this._params.labels.length-1;
                 } else if (this._params.type == "integer") {
                     this._params = {
                         min : this._datapts[0],
                         max : this._datapts[this._datapts.length-1],
+                        step: 1,
                         value : this._params.min,
                     };
                 } else if (this._params.type == "float") {
@@ -1204,20 +1228,19 @@
                 }
             },
             draw: function () {
-                var self = this, initval;
-                var onevaltemp = '<div class="${_class}"><label>${_lattr}: </label><input/></div>';
-                var twovaltemp = '<div class="${_class}"><label>${_lattr}: From</label><input/><label> To</label><input/></div>';
+                var self = this,
+                    onevaltemp = '<div class="${_class}"><label>${_lattr}: </label><input/></div>',
+                    twovaltemp = '<div class="${_class}"><label>${_lattr}: From</label><input/><label> To</label><input/></div>';
 
                 if (this._params.values) {
                     $.tmpl(twovaltemp, this).appendTo(this._slavecont);
                     this._ui = $('<div style="margin: 15px;"></div>').appendTo(this._id);
                     this._params.from = $(this._id+" input:eq(0)").blur(function() {
-                        self._ui.slider("option", "values", [$(this).val(), self._params.to.val()]);
-                    });
+                        self._ui.slider("values", [$(this).val(), self._params.to.val()]);
+                    }).val(this._params.min);
                     this._params.to = $(this._id+" input:eq(1)").blur(function() {
-                        self._ui.slider("option", "values", [self._params.from.val(), $(this).val()]);
-                    });
-                    initval = [this._params.min, this._params.max].map(roundDigits);
+                        self._ui.slider("values", [self._params.from.val(), $(this).val()]);
+                    }).val(this._params.max);
                     this._params.change = function (event, ui) {
                         var value = ui.values;
                         self._params.from.val(value[0]);
@@ -1237,8 +1260,7 @@
                             value = parseInt(userio);
                             self._ui.slider("option", "value", value);
                         }
-                    });
-                    initval = this._params.labels ? this._params.labels[this._params.min] : this._params.min;
+                    }).val((this._params.labels ? this._params.labels[0] : this._params.min));
                     this._params.change = function (event, ui) {
                         var value = self._params.labels ? self._params.labels[ui.value] : ui.value;
                         self._params.exact.val(value);
@@ -1246,12 +1268,6 @@
                     };
                 }
                 this._ui.slider(this._params);
-                if (initval.constructor == Array) {
-                    this._params.from.val(initval[0]);
-                    this._params.to.val(initval[1]);
-                } else {
-                    this._params.exact.val(initval);
-                }
             },
             filterLocal: function (pt) {
                 if (this._params.values) {
@@ -1275,34 +1291,35 @@
                 return q;
             },
             reset: function () {
-                var q = {}, val, vals, min, max;
-                min = 0;
-                max = this._datapts.length - 1;
+                var val, vals, min, max, changed;
                 if (this._params.type != "string") {
-                    min = this._datapts[min];
-                    max = this._datapts[max];
+                    min = Math.floor(this._datapts[0]/this._params.step)*this._params.step;
+                    max = Math.ceil(this._datapts[this._datapts.length-1]/this._params.step)*this._params.step;
+                } else {
+                    min = 0;
+                    max = this._distinctVals(this._datapts).length;
                 }
-                if (this._params.values) {
+                if (min != this._params.min) {
+                    this._params.min = min;
+                    this._ui.slider("option", "min", min);
+                    changed = true;
+                }
+                if (max != this._params.max) {
+                    this._params.max = max;
+                    this._ui.slider("option", "max", max);
+                    changed = true;
+                }
+                if (this._params.values && changed) {
                     vals = this._ui.slider("values");
-                    if ((vals[0] < min) || (vals[0] > max)) {
-                        vals[0] = min;
-                    }
-                    if ((vals[1] < min) || (vals[1] > max)) {
-                        vals[1] = max;
-                    }
-                    vals = vals.map(roundDigits);
                     this._ui.slider("values", vals);
                     this._params.from.val(vals[0]);
                     this._params.to.val(vals[1]);
-                } else {
+                } else if (changed) {
+                    // broken for strings right now
                     val = this._ui.slider("value");
-                    if ((val < min) || (val > max)) {
-                        this._ui.slider("value", roundDigits(min));
-                        this._params.exact.val(roundDigits(min));
-                    }
+                    this._ui.slider("value", val);
+                    this._params.exact.val(val);
                 }
-                this._ui.slider("option", "min", min);
-                this._ui.slider("option", "max", max);
             },
         },
 
