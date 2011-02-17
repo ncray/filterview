@@ -682,51 +682,77 @@
             if (n <= 1) return 1;
             return (n < 30) ? Math.floor(Math.sqrt(n))+1 : Math.floor(Math.log(n)/Math.log(2)+2);
         },
+        _createBins: function(min, max, num) {
+            this._bins = [];
+            this._breaks = [];
+            var range = max - min, low, high;
+            var dd = Math.floor(Math.log(range)/Math.log(10));
+            var diff = range/num;
+            low = roundDigits(min, 2-dd, Math.floor);
+            high = roundDigits(min + diff, 2-dd);
+            this._breaks.push(low);
+            for (var i = 2; i <= num; i++) {
+                this._bins.push({
+                    low: low,
+                    high: high,
+                    count: 0,
+                });
+                low = high;
+                high = roundDigits(min+i*diff, 2-dd);
+                this._breaks.push(low);
+            }
+            high = roundDigits(max, 2-dd, Math.ceil);
+            this._breaks.push(high);
+            this._bins.push({low: low, high: high, count: 0});
+        },
         _dropIntoBuckets: function (datapts) {
+            var xbound, numbins, binsize, lower;
             this._bins = [];
             datapts || (datapts = this._datapts);
-            var xbound = datapts.reduce(function(prev, curr) {
+            xbound = datapts.reduce(function(prev, curr) {
                 return [Math.min(prev[0],curr.xx), Math.max(prev[1], curr.xx)];
-            }, [Infinity, -Infinity]).map(roundDigits);
-            var numbins = this._numBins(datapts.length);
-            var binsize = (xbound[1] - xbound[0])/numbins;
-            for (var bot = xbound[0]; bot < xbound[1]; bot+=binsize) {
-                this._bins.push([bot, bot+binsize, 0]);
-            }
+            }, [Infinity, -Infinity]);
+            numbins = this._numBins(datapts.length);
+            this._createBins(xbound[0], xbound[1], numbins);
             datapts.forEach(function(val) {
-                var i = Math.floor((val.xx-xbound[0])/binsize);
-                i = Math.min(i, numbins-1);
-                i = Math.max(i, 0);
-                this._bins[i][2]++;
+                $.each(this._bins, function(i, bin) {
+                    if ((bin.low < val.xx) && (val.xx <= bin.high)) {
+                        bin.count++;
+                        return false;
+                    }
+                });
             }, this);
         },
         _maxCount: function () {
-            var counts = this._bins.map(function(bin) {return bin[2]});
+            var counts = this._bins.map(function(bin) {return bin.count});
             return Math.max.apply(Math, counts);
         },
         resetAxes: function (datapts) {
+            var numbins, maxcount, breaks;
             datapts || (datapts = this._datapts);
             this._dropIntoBuckets(datapts);
-            var numbins = this._bins.length;
-            var maxcount = this._maxCount();
+            numbins = this._bins.length;
+            maxcount = this._maxCount();
+            breaks = this._breaks;
 
             // Let axes handle edge cases (e.g. no datapts)
             this._drawNow = false;
             this.xAxis._numTicks = numbins;
-            this.xAxis.resize(this._bins[0][0], this._bins[numbins-1][1]);
+            this.xAxis.resize(this._bins[0].low, this._bins[numbins-1].high, breaks);
             this.yAxis.resize(0, maxcount);
         },
         drawPlot: function (filterData) {
             this._datapointCont = this._wrapper.group(this._plot);
             this._dropIntoBuckets(filterData);
             var maxcount = this._maxCount();
-            this._bins.forEach(function(bin, i) {
-                var topleft = this._getSVGCoords(bin[0], bin[2]);
-                var bottomright = this._getSVGCoords(bin[1], 0);
-                var w = bottomright[0] - topleft[0];
-                var h = bottomright[1] - topleft[1];
+            this._bins.forEach(function(bin) {
+                var topleft, botright, w, h;
+                topleft = this._getSVGCoords(bin.low, bin.count);
+                botright = this._getSVGCoords(bin.high, 0);
+                w = botright[0] - topleft[0];
+                h = botright[1] - topleft[1];
                 this._wrapper.rect(this._datapointCont, topleft[0], topleft[1], w, h, {
-                    fill: "blue", color: "black", strokeWidth: "5px"});
+                    fill: "blue", color: "black", strokeWidth: "15px"});
             }, this);
         },
     });
@@ -775,7 +801,6 @@
 	    } else if (param && param.constructor == Array) {
                 this._breaks = param;
             }
-            debugger;
 	    return this;
 	},
 
@@ -1263,8 +1288,9 @@
        @param num the number to round off
        @param d the number of decimal places to have
        @return rounded decimal*/
-    function roundDigits (num, d) {
+    function roundDigits (num, d, fn) {
         d || (d = 2);
-        return (Math.round(Math.pow(10,d)*num)/Math.pow(10,d));
+        fn || (fn = Math.round);
+        return fn.call(Math, (Math.pow(10,d)*num))/Math.pow(10,d);
     };
 })(jQuery);
