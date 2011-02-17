@@ -35,10 +35,8 @@
         this._updating = false;
         // Dict from local attr names to remote attr names for remote data
         this._local2remote = {};
-        // the type parameter borrowed from R plots
-        this._type = "p";
-        // post functions that are hooked after completion of plot
-        this._postFns = [];
+        // Non-pointwise parameters for plot
+        this._settings = {};
         // must be true to refresh plot
         this._drawNow = false;
     };
@@ -294,6 +292,7 @@
            @return none */
         drawPlot: function (filterData) {
             this._datapointCont = this._wrapper.group(this._plot);
+            var type = this._settings.type || "p";
 	    var dims = this._getDims();
             var pointR = Math.min(dims[this.W], dims[this.H])/125;
             var x_attr = this._isRemote ? (this._local2remote.xx ? this._local2remote.xx.remote_attr : null) : "xx";
@@ -321,12 +320,12 @@
             filterData.forEach(function(pt, i) {
                 var data = getPoint(pt, i);
                 var coords = this._getSVGCoords(data.xx, data.yy);
-                if (this._type.match(/^(b|l|o)$/) && (i < filterData.length - 1)) {
+                if (type.match(/^(b|l|o)$/) && (i < filterData.length - 1)) {
                     var data2 = getPoint(filterData[i+1], i+1);
                     var coords2 = this._getSVGCoords(data2.xx, data2.yy);
                     this._wrapper.line(this._plot, coords[0], coords[1], coords2[0], coords2[1], {strokeWidth: 1, stroke: "black"});
                 }
-                if (this._type.match(/^(p|b|o)$/)) {
+                if (type.match(/^(p|b|o)$/)) {
                     var c = this._wrapper.circle(this._datapointCont, coords[0], coords[1], data.rad,
                                  {fill: data.col, stroke: "black", strokeWidth: 1});
                     this._showStatus(c, data);
@@ -416,7 +415,7 @@
 	    this._drawAxis(false);
 	    this._drawTitle();
             this.drawPlot(queriedData);
-            this._postFns.forEach(function(fn) {
+            this._settings.postFns.forEach(function(fn) {
                 fn.call(this, queriedData);
             }, this);
         },
@@ -424,7 +423,6 @@
         /* Clear all data and reset defaults */
         clearData: function () {
             this._datapts = [];
-            this._postFns = [];
             this._local2remote = {};
             this._uis.forEach(function(ui) {ui.destroy();});
             this._uis = [];
@@ -482,6 +480,7 @@
            the creation of the SVGPlot instance.
            @param data   data passed in from jscliplot.js */
         loadData: function (data) {
+            data.postFns || (data.postFns = []);
             this.clearData();
             this._isRemote = !!data.remote;
             this._autorescale = !!data.rescale;
@@ -490,8 +489,9 @@
             var uiFn = this._isRemote ? this._createRemoteUI : this._createLocalUI;
             var uipromises = [];
 
-            (!data.postFns) || (this._postFns = data.postFns);
-            (!data.type) || (this._type = data.type);
+            delete data.local;
+            delete data.remote;
+            this._settings = data;
             (!data.xlab) || this.xAxis.title(data.xlab);
             (!data.ylab) || this.yAxis.title(data.ylab);
             (!data.ui)   || uiFn.call(this, data.ui, false, uipromises);
@@ -679,6 +679,7 @@
 
     $.extend(SVGHistogram.prototype, {
         _numBins: function (n) {
+            if (this._settings.bins) return this._settings.bins;
             if (n <= 1) return 1;
             return (n < 30) ? Math.floor(Math.sqrt(n))+1 : Math.floor(Math.log(n)/Math.log(2)+2);
         },
@@ -752,7 +753,7 @@
                 w = botright[0] - topleft[0];
                 h = botright[1] - topleft[1];
                 this._wrapper.rect(this._datapointCont, topleft[0], topleft[1], w, h, {
-                    fill: "blue", color: "black", strokeWidth: "15px"});
+                    fill: "blue", stroke: "black", strokeWidth: "3"});
             }, this);
         },
     });
@@ -1005,7 +1006,8 @@
                     var NUMBUCKETS = 10, min = this._datapts[0];
                     this._params.labels = [];
                     for (var i=0; i<NUMBUCKETS; i++) {
-                        var interval = [min + i*range/NUMBUCKETS, min + (i+1)*range/NUMBUCKETS].map(roundDigits);
+                        var interval = [roundDigits(min + i*range/NUMBUCKETS),
+                                        roundDigits(min + (i+1)*range/NUMBUCKETS)];
                         this._params.labels.push(interval);
                     }
                 } else {

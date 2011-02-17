@@ -7,6 +7,7 @@ require(["order!thirdparty/jquery-1.5.min.js", "order!jscliplot"],
              $.get("data/three_cluster.json", function (foo) {
                  var fncalls = {
                      "hist(foo.xx)" : [foo.xx],
+                     "hist(foo.xx, {bins:12})" : [foo.xx, {bins: 12}],
                  };
 
                  var svgtmpl = '<div id="${id}" class="right_half"></div>';
