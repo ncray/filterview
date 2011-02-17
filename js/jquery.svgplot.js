@@ -665,6 +665,7 @@
         // The main container for the plot
 	this._plotCont = this._wrapper.svg(0, 0, 0, 0, {class_: 'svg-plot'});
         this._gridlines = [{stroke: "lightgray"}, null];
+        this._template = '<div class="tooltip"><p>Low: ${low}</p><p>High: ${high}</p><p>Count: ${count}</p></div>';
 
         /* Construct Axes */
         this._drawNow = false;
@@ -744,18 +745,57 @@
             this.yAxis.resize(0, maxcount);
         },
         drawPlot: function (filterData) {
+            var maxcount;
             this._datapointCont = this._wrapper.group(this._plot);
             this._dropIntoBuckets(filterData);
-            var maxcount = this._maxCount();
+            maxcount = this._maxCount();
+            if (!this._settings.col) {
+                this._settings.col = "#ccccff";
+            }
+            if (this._settings.col.constructor == Array) {
+                if (this._settings.col.length != this._bins.length) {
+                    this._settings.col = "black";
+                } else {
+                    this._bins.forEach(function(bin, i) {
+                        bin.col = this._settings.col[i];
+                    }, this);
+                }
+            }
+            if (typeof this._settings.col == 'string') {
+                this._bins.forEach(function(bin) {
+                    bin.col = this._settings.col;
+                }, this);
+            }
             this._bins.forEach(function(bin) {
-                var topleft, botright, w, h;
+                var topleft, botright, w, h, rect;
                 topleft = this._getSVGCoords(bin.low, bin.count);
                 botright = this._getSVGCoords(bin.high, 0);
                 w = botright[0] - topleft[0];
                 h = botright[1] - topleft[1];
-                this._wrapper.rect(this._datapointCont, topleft[0], topleft[1], w, h, {
-                    fill: "blue", stroke: "black", strokeWidth: "3"});
+                rect = this._wrapper.rect(this._datapointCont, topleft[0], topleft[1], w, h, {
+                    fill: bin.col, stroke: "#000000", strokeWidth: "3"});
+                this._showStatus(rect, bin);
             }, this);
+        },
+        _showStatus: function(rect, data) {
+            if (!this._template) {
+                return;
+            }
+            var self = this;
+            var html = $.tmpl(this._template, data);
+            $(rect).hover(function() {
+                var dims = self._getDims(), buf = 10, w, h, left, top;
+                w = dims[self.W]/3, h = dims[self.H]/3;
+                left = dims[self.X]+dims[self.W]-w-buf;
+                top = dims[self.Y]+buf;
+                var toolcont = self._wrapper.group(self._plotCont, {class_: "point-metadata"});
+                self._wrapper.rect(toolcont, left, top, w, h,
+                                   {fill: 'white', stroke: data.col, strokeWidth: 3});
+                var temp = self._wrapper.foreignObject(toolcont, left, top, w, h);
+                $(temp).append(html);
+            }, function () {
+                $(".point-metadata").remove();
+            });
         },
     });
 
