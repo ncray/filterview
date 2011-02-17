@@ -35,10 +35,8 @@
         this._updating = false;
         // Dict from local attr names to remote attr names for remote data
         this._local2remote = {};
-        // the type parameter borrowed from R plots
-        this._type = "p";
-        // post functions that are hooked after completion of plot
-        this._postFns = [];
+        // Non-pointwise parameters for plot
+        this._settings = {};
         // must be true to refresh plot
         this._drawNow = false;
     };
@@ -216,10 +214,10 @@
 	    this._bg = this._wrapper.group(this._plotCont, {class_: 'background'});
 	    var dims = this._getDims();
 	    this._wrapper.rect(this._bg, dims[this.X], dims[this.Y], dims[this.W], dims[this.H], this._areaFormat);
-	    if (this._gridlines[0] && this.yAxis._ticks.major && !noYGrid) {
+	    if (this._gridlines[0] && !noYGrid) {
 		this._drawGridlines(true, this._gridlines[0], dims);
 	    }
-	    if (this._gridlines[1] && this.xAxis._ticks.major && !noXGrid) {
+	    if (this._gridlines[1] && !noXGrid) {
 		this._drawGridlines(false, this._gridlines[1], dims);
 	    }
 	    return this._bg;
@@ -231,16 +229,14 @@
 	_drawGridlines: function(horiz, format, dims) {
 	    var g = this._wrapper.group(this._bg, format);
 	    var axis = (horiz ? this.yAxis : this.xAxis);
-	    var scales = this._getScales();
-            var buffer_ticks = Math.floor(axis._buffer/axis._ticks.major);
-            var major = axis._scale.min + axis._buffer - (buffer_ticks*axis._ticks.major);
-	    while (major < axis._scale.max) {
-		var v = (horiz ? axis._scale.max - major : major - axis._scale.min) *
-		    scales[horiz ? 1 : 0] + (horiz ? dims[this.Y] : dims[this.X]);
-		this._wrapper.line(g, (horiz ? dims[this.X] : v), (horiz ? v : dims[this.Y]),
-				   (horiz ? dims[this.X] + dims[this.W] : v), (horiz ? v : dims[this.Y] + dims[this.H]));
-		major += axis._ticks.major;
-	    }
+            axis.breaks().forEach(function(br) {
+                var ll = (horiz ? this._getSVGCoords(null, br) : this._getSVGCoords(br));
+                this._wrapper.line(g,
+                                   (horiz ? dims[this.X] : ll),
+                                   (horiz ? ll : dims[this.Y]),
+                                   (horiz ? dims[this.X]+dims[this.W] : ll),
+                                   (horiz ? ll : dims[this.Y]+dims[this.H]));
+            }, this);
 	},
 
 	/* Draw an axis, its tick marks, and title.
@@ -248,38 +244,30 @@
 	_drawAxis: function(horiz) {
 	    var id = (horiz ? 'x' : 'y') + 'Axis';
 	    var axis = (horiz ? this.xAxis : this.yAxis);
-	    var axis2 = (horiz ? this.yAxis : this.xAxis);
 	    var dims = this._getDims();
-	    var scales = this._getScales();
 	    var gl = this._wrapper.group(this._plot, $.extend({class_: id}, axis._lineFormat));
 	    var gt = this._wrapper.group(this._plot, $.extend({class_: id + 'Labels',
 			                                       textAnchor: (horiz ? 'middle' : 'end')}, axis._labelFormat));
-	    var zero = (horiz ? axis2._scale.max - axis2._scale.min : 0) *
-		scales[horiz ? 1 : 0] + (horiz ? dims[this.Y] : dims[this.X]);
+            var end = (horiz ? dims[this.Y]+dims[this.H] : dims[this.X]);
             // This line makes the actual axis
-	    this._wrapper.line(gl, (horiz ? dims[this.X] : zero), (horiz ? zero : dims[this.Y]),
-			       (horiz ? dims[this.X] + dims[this.W] : zero),
-			       (horiz ? zero : dims[this.Y] + dims[this.H]));
-	    if (axis._ticks.major) {
-                var buffer_ticks = Math.floor(axis._buffer/axis._ticks.major);
-                var major = axis._scale.min + axis._buffer - (buffer_ticks*axis._ticks.major);
-		var offsets = [(axis._ticks.position == 'sw' || axis._ticks.position == 'both' ? -1 : 0),
-			       (axis._ticks.position == 'ne' || axis._ticks.position == 'both' ? +1 : 0)];
-		while (major <= axis._scale.max) {
-		    var len = axis._ticks.size;
-		    var xy = (horiz ? major - axis._scale.min : axis._scale.max - major) *
-			scales[horiz ? 0 : 1] + (horiz ? dims[this.X] : dims[this.Y]);
-                    // tick marks
-		    this._wrapper.line(gl, (horiz ? xy : zero + len * offsets[0]),
-				       (horiz ? zero + len * offsets[0] : xy),
-				       (horiz ? xy : zero + len * offsets[1]),
-				       (horiz ? zero - len * offsets[1] : xy));
-                    this._wrapper.text(gt, roundDigits((horiz ? xy : zero - axis._ticks.size)),
-					   roundDigits((horiz ? zero + axis._ticks.size : xy)),
-                                       '' + roundDigits(major));
-		    major += axis._ticks.major;
-		}
-	    }
+	    this._wrapper.line(gl,
+                               (horiz ? dims[this.X] : end),
+                               (horiz ? end : dims[this.Y]),
+			       (horiz ? dims[this.X]+dims[this.W] : end),
+			       (horiz ? end : dims[this.Y] + dims[this.H]));
+            var offset = horiz ? -1 : 1;
+	    axis.breaks().forEach(function(br) {
+        	var xy = (horiz ? this._getSVGCoords(br) : this._getSVGCoords(null, br));
+                // tick marks
+         	this._wrapper.line(gl,
+                                   (horiz ? xy : end),
+				   (horiz ? end + axis._ticksize * offset : xy),
+				   (horiz ? xy : end + axis._ticksize * offset),
+				   (horiz ? end: xy));
+                this._wrapper.text(gt, (horiz ? xy : end - axis._ticksize),
+				   (horiz ? end + axis._ticksize : xy),
+                                   br.toString());
+	    }, this);
 	    if (axis._title) {
 		if (horiz) {
 		    this._wrapper.text(this._plotCont, dims[this.X] + dims[this.W] / 2,
@@ -304,6 +292,7 @@
            @return none */
         drawPlot: function (filterData) {
             this._datapointCont = this._wrapper.group(this._plot);
+            var type = this._settings.type || "p";
 	    var dims = this._getDims();
             var pointR = Math.min(dims[this.W], dims[this.H])/125;
             var x_attr = this._isRemote ? (this._local2remote.xx ? this._local2remote.xx.remote_attr : null) : "xx";
@@ -331,12 +320,12 @@
             filterData.forEach(function(pt, i) {
                 var data = getPoint(pt, i);
                 var coords = this._getSVGCoords(data.xx, data.yy);
-                if (this._type.match(/^(b|l|o)$/) && (i < filterData.length - 1)) {
+                if (type.match(/^(b|l|o)$/) && (i < filterData.length - 1)) {
                     var data2 = getPoint(filterData[i+1], i+1);
                     var coords2 = this._getSVGCoords(data2.xx, data2.yy);
                     this._wrapper.line(this._plot, coords[0], coords[1], coords2[0], coords2[1], {strokeWidth: 1, stroke: "black"});
                 }
-                if (this._type.match(/^(p|b|o)$/)) {
+                if (type.match(/^(p|b|o)$/)) {
                     var c = this._wrapper.circle(this._datapointCont, coords[0], coords[1], data.rad,
                                  {fill: data.col, stroke: "black", strokeWidth: 1});
                     this._showStatus(c, data);
@@ -426,7 +415,7 @@
 	    this._drawAxis(false);
 	    this._drawTitle();
             this.drawPlot(queriedData);
-            this._postFns.forEach(function(fn) {
+            this._settings.postFns.forEach(function(fn) {
                 fn.call(this, queriedData);
             }, this);
         },
@@ -434,7 +423,6 @@
         /* Clear all data and reset defaults */
         clearData: function () {
             this._datapts = [];
-            this._postFns = [];
             this._local2remote = {};
             this._uis.forEach(function(ui) {ui.destroy();});
             this._uis = [];
@@ -492,6 +480,7 @@
            the creation of the SVGPlot instance.
            @param data   data passed in from jscliplot.js */
         loadData: function (data) {
+            data.postFns || (data.postFns = []);
             this.clearData();
             this._isRemote = !!data.remote;
             this._autorescale = !!data.rescale;
@@ -500,8 +489,9 @@
             var uiFn = this._isRemote ? this._createRemoteUI : this._createLocalUI;
             var uipromises = [];
 
-            (!data.postFns) || (this._postFns = data.postFns);
-            (!data.type) || (this._type = data.type);
+            delete data.local;
+            delete data.remote;
+            this._settings = data;
             (!data.xlab) || this.xAxis.title(data.xlab);
             (!data.ylab) || this.yAxis.title(data.ylab);
             (!data.ui)   || uiFn.call(this, data.ui, false, uipromises);
@@ -675,6 +665,7 @@
         // The main container for the plot
 	this._plotCont = this._wrapper.svg(0, 0, 0, 0, {class_: 'svg-plot'});
         this._gridlines = [{stroke: "lightgray"}, null];
+        this._template = '<div class="tooltip"><p>Low: ${low}</p><p>High: ${high}</p><p>Count: ${count}</p></div>';
 
         /* Construct Axes */
         this._drawNow = false;
@@ -689,54 +680,122 @@
 
     $.extend(SVGHistogram.prototype, {
         _numBins: function (n) {
+            if (this._settings.bins) return this._settings.bins;
+            if (n <= 1) return 1;
             return (n < 30) ? Math.floor(Math.sqrt(n))+1 : Math.floor(Math.log(n)/Math.log(2)+2);
         },
+        _createBins: function(min, max, num) {
+            this._bins = [];
+            var range = max - min, br, dd, diff;
+            if (this._settings.breaks &&
+                this._settings.breaks.constructor == Array) {
+                this._breaks = this._settings.breaks;
+            } else {
+                this._breaks = [];
+                dd = Math.floor(Math.log(range)/Math.log(10));
+                diff = range/num;
+                this._breaks.push(roundDigits(min, 2-dd, Math.floor))
+                for (var i = 1; i < num; i++) {
+                    this._breaks.push(roundDigits(min+i*diff, 2-dd));
+                }
+                this._breaks.push(roundDigits(max, 2-dd, Math.ceil));
+            }
+            for (var i = 0; i < this._breaks.length-1; i++) {
+                this._bins.push({
+                    low: this._breaks[i],
+                    high: this._breaks[i+1],
+                    count: 0,
+                });
+            }
+        },
         _dropIntoBuckets: function (datapts) {
+            var xbound, numbins, binsize, lower;
             this._bins = [];
             datapts || (datapts = this._datapts);
-            var xbound = datapts.reduce(function(prev, curr) {
+            xbound = datapts.reduce(function(prev, curr) {
                 return [Math.min(prev[0],curr.xx), Math.max(prev[1], curr.xx)];
-            }, [Infinity, -Infinity]).map(roundDigits);
-            var numbins = this._numBins(datapts.length);
-            var binsize = (xbound[1] - xbound[0])/numbins;
-            for (var bot = xbound[0]; bot < xbound[1]; bot+=binsize) {
-                this._bins.push([bot, bot+binsize, 0]);
-            }
+            }, [Infinity, -Infinity]);
+            numbins = this._numBins(datapts.length);
+            this._createBins(xbound[0], xbound[1], numbins);
             datapts.forEach(function(val) {
-                var i = Math.floor((val.xx-xbound[0])/binsize);
-                i = Math.min(i, numbins-1);
-                i = Math.max(i, 0);
-                this._bins[i][2]++;
+                $.each(this._bins, function(i, bin) {
+                    if ((bin.low < val.xx) && (val.xx <= bin.high)) {
+                        bin.count++;
+                        return false;
+                    }
+                });
             }, this);
         },
         _maxCount: function () {
-            var counts = this._bins.map(function(bin) {return bin[2]});
+            var counts = this._bins.map(function(bin) {return bin.count});
             return Math.max.apply(Math, counts);
         },
         resetAxes: function (datapts) {
+            var numbins, maxcount, breaks;
             datapts || (datapts = this._datapts);
             this._dropIntoBuckets(datapts);
-            var numbins = this._bins.length;
-            var maxcount = this._maxCount();
+            numbins = this._bins.length;
+            maxcount = this._maxCount();
+            breaks = this._breaks;
 
             // Let axes handle edge cases (e.g. no datapts)
             this._drawNow = false;
             this.xAxis._numTicks = numbins;
-            this.xAxis.resize(this._bins[0][0], this._bins[numbins-1][1]);
+            this.xAxis.resize(this._bins[0].low, this._bins[numbins-1].high, breaks);
             this.yAxis.resize(0, maxcount);
         },
         drawPlot: function (filterData) {
+            var maxcount;
             this._datapointCont = this._wrapper.group(this._plot);
             this._dropIntoBuckets(filterData);
-            var maxcount = this._maxCount();
-            this._bins.forEach(function(bin, i) {
-                var topleft = this._getSVGCoords(bin[0], bin[2]);
-                var bottomright = this._getSVGCoords(bin[1], 0);
-                var w = bottomright[0] - topleft[0];
-                var h = bottomright[1] - topleft[1];
-                this._wrapper.rect(this._datapointCont, topleft[0], topleft[1], w, h, {
-                    fill: "blue", color: "black", strokeWidth: "5px"});
+            maxcount = this._maxCount();
+            if (!this._settings.col) {
+                this._settings.col = "#ccccff";
+            }
+            if (this._settings.col.constructor == Array) {
+                if (this._settings.col.length != this._bins.length) {
+                    this._settings.col = "black";
+                } else {
+                    this._bins.forEach(function(bin, i) {
+                        bin.col = this._settings.col[i];
+                    }, this);
+                }
+            }
+            if (typeof this._settings.col == 'string') {
+                this._bins.forEach(function(bin) {
+                    bin.col = this._settings.col;
+                }, this);
+            }
+            this._bins.forEach(function(bin) {
+                var topleft, botright, w, h, rect;
+                topleft = this._getSVGCoords(bin.low, bin.count);
+                botright = this._getSVGCoords(bin.high, 0);
+                w = botright[0] - topleft[0];
+                h = botright[1] - topleft[1];
+                rect = this._wrapper.rect(this._datapointCont, topleft[0], topleft[1], w, h, {
+                    fill: bin.col, stroke: "#000000", strokeWidth: "3"});
+                this._showStatus(rect, bin);
             }, this);
+        },
+        _showStatus: function(rect, data) {
+            if (!this._template) {
+                return;
+            }
+            var self = this;
+            var html = $.tmpl(this._template, data);
+            $(rect).hover(function() {
+                var dims = self._getDims(), buf = 10, w, h, left, top;
+                w = dims[self.W]/3, h = dims[self.H]/3;
+                left = dims[self.X]+dims[self.W]-w-buf;
+                top = dims[self.Y]+buf;
+                var toolcont = self._wrapper.group(self._plotCont, {class_: "point-metadata"});
+                self._wrapper.rect(toolcont, left, top, w, h,
+                                   {fill: 'white', stroke: data.col, strokeWidth: 3});
+                var temp = self._wrapper.foreignObject(toolcont, left, top, w, h);
+                $(temp).append(html);
+            }, function () {
+                $(".point-metadata").remove();
+            });
         },
     });
 
@@ -751,56 +810,43 @@
 	this._plot = plot; // The owning plot
 	this._title = title || ''; // The plot's title
 	this._titleFormat = {fontSize:"12px"}; // Formatting settings for the title
-	this._titleOffset = 0; // The offset for positioning the title
+	this._titleOffset = 25; // The offset for positioning the title
 	this._labelFormat = {fontSize: "10px"}; // Formatting settings for the labels
 	this._lineFormat = {stroke: 'black', strokeWidth: 1}; // Formatting settings for the axis lines
-	this._ticks = {major: major || 10, size: 10, position: 'ne'}; // Tick mark options
+	this._ticksize = 10;
+        this._breaks = [];
 	this._scale = {min: min || 0, max: max || 100}; // Axis scale settings
         this._buffer = 0;
-        this._numTicks = 8;
+        this._numBreaks = 8;
     }
 
     $.extend(SVGPlotAxis.prototype, {
-
-	/* Set or retrieve the scale for this axis.
-	   @param  min  (number) the minimum value shown
-	   @param  max  (number) the maximum value shown
-	   @return  (SVGPlotAxis) this axis object or
-	   (object) min and max values (if no parameters) */
-	scale: function(min, max) {
-	    if (arguments.length == 0) {
-		return this._scale;
-	    }
-	    this._scale.min = min;
-	    this._scale.max = max;
-	    this._plot._refreshPlot();
-	    return this;
-	},
-
-	/* Set or retrieve the ticks for this axis.
-	   @param  major     (number) the distance between major ticks
-	   @param  minor     (number) the distance between minor ticks
-	   @param  size      (number) the length of the major ticks (minor are half) (optional)
-	   @param  position  (string) the location of the ticks:
-	   'nw', 'se', 'both' (optional)
+	/* Set or retrieve the breakpoints for this axis.
+	   @param  param (number or array) if number, its the unit space
+                   between breaks, if array, its the breaks themselves
 	   @return  (SVGPlotAxis) this axis object or
 	   (object) major, minor, size, and position values (if no parameters) */
-	ticks: function(major, size, position) {
+	breaks: function(param) {
+            var bufferTicks, tick;
 	    if (arguments.length == 0) {
-		return this._ticks;
+		return this._breaks;
 	    }
-	    if (typeof size == 'string') {
-		position = size;
-		size = null;
-	    }
-	    this._ticks.major = major;
-	    this._ticks.size = size || this._ticks.size;
-	    this._ticks.position = position || this._ticks.position;
-	    this._plot._refreshPlot();
+	    if (typeof param == "number") {
+                this._breaks = [];
+                bufferTicks = Math.floor(this._buffer/param);
+                tick = this._scale.min + this._buffer - (bufferTicks*param);
+                tick = roundDigits(tick);
+                while (tick < this._scale.max) {
+                    this._breaks.push(roundDigits(tick));
+                    tick += param;
+                }
+	    } else if (param && param.constructor == Array) {
+                this._breaks = param;
+            }
 	    return this;
 	},
 
-        resize: function (min, max, buffer) {
+        resize: function (min, max, breaks, buffer) {
             // In the case no points were present after data added
             if ((min === Infinity) || (max === -Infinity)) {
                 return;
@@ -808,19 +854,12 @@
             buffer || (buffer = 0.1);
             var range = max - min;
             this._buffer = buffer < 1 ? range*buffer : buffer;
-            min -= this._buffer;
-            max += this._buffer;
-            this.scale(min, max);
-            this.ticks(range/this._numTicks);
+            this._scale.min = (min - this._buffer);
+            this._scale.max = (max + this._buffer);
+            this.breaks((breaks || range/this._numBreaks));
+            return this;
         },
 
-	/* Set or retrieve the title for this axis.
-	   @param  title   (string) the title text
-	   @param  offset  (number) the distance to offset the title position (optional)
-	   @param  colour  (string) how to colour the title (optional) 
-	   @param  format  (object) formatting settings for the title (optional)
-	   @return  (SVGPlotAxis) this axis object or
-	   (object) title, offset, and format values (if no parameters) */
 	title: function(title, offset, colour, format) {
 	    if (arguments.length == 0) {
 		return {title: this._title, offset: this._titleOffset, format: this._titleFormat};
@@ -839,44 +878,6 @@
 	    if (colour || format) {
 		this._titleFormat = $.extend(format || {}, (colour ? {fill: colour} : {}));
 	    }
-	    this._plot._refreshPlot();
-	    return this;
-	},
-
-	/* Set or retrieve the label format for this axis.
-	   @param  colour  (string) how to colour the labels (optional) 
-	   @param  format  (object) formatting settings for the labels (optional)
-	   @return  (SVGPlotAxis) this axis object or
-	   (object) format values (if no parameters) */
-	format: function(colour, format) {
-	    if (arguments.length == 0) {
-		return this._labelFormat;
-	    }
-	    if (typeof colour != 'string') {
-		format = colour;
-		colour = null;
-	    }
-	    this._labelFormat = $.extend(format || {}, (colour ? {fill: colour} : {}));
-	    this._plot._refreshPlot();
-	    return this;
-	},
-
-	/* Set or retrieve the line formatting for this axis.
-	   @param  colour    (string) the line's colour
-	   @param  width     (number) the line's width (optional)
-	   @param  settings  (object) additional formatting settings for the line (optional)
-	   @return  (SVGPlotAxis) this axis object or
-	   (object) line formatting values (if no parameters) */
-	line: function(colour, width, settings) {
-	    if (arguments.length == 0) {
-		return this._lineFormat;
-	    }
-	    if (typeof width != 'number') {
-		settings = width;
-		width = null;
-	    }
-	    $.extend(this._lineFormat, {stroke: colour, strokeWidth:
-			                width || this._lineFormat.strokeWidth}, settings || {});
 	    this._plot._refreshPlot();
 	    return this;
 	},
@@ -1046,7 +1047,8 @@
                     var NUMBUCKETS = 10, min = this._datapts[0];
                     this._params.labels = [];
                     for (var i=0; i<NUMBUCKETS; i++) {
-                        var interval = [min + i*range/NUMBUCKETS, min + (i+1)*range/NUMBUCKETS].map(roundDigits);
+                        var interval = [roundDigits(min + i*range/NUMBUCKETS),
+                                        roundDigits(min + (i+1)*range/NUMBUCKETS)];
                         this._params.labels.push(interval);
                     }
                 } else {
@@ -1329,8 +1331,9 @@
        @param num the number to round off
        @param d the number of decimal places to have
        @return rounded decimal*/
-    function roundDigits (num, d) {
+    function roundDigits (num, d, fn) {
         d || (d = 2);
-        return (Math.round(Math.pow(10,d)*num)/Math.pow(10,d));
+        fn || (fn = Math.round);
+        return fn.call(Math, (Math.pow(10,d)*num))/Math.pow(10,d);
     };
 })(jQuery);
