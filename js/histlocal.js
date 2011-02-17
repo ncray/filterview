@@ -10,6 +10,7 @@ require(["order!thirdparty/jquery-1.5.min.js", "order!jscliplot"],
                      "hist(foo.xx, {bins:12})" : [foo.xx, {bins: 12}],
                      "hist(foo.xx, {breaks:[0,2,4,5,6,8,10,12]})" : [foo.xx, {breaks:[0,2,4,5,6,8,10,12]}],
                      "hist(foo.xx, {bins: 6, col:['red','red', 'red', 'green', 'green', 'green']})" : [foo.xx, {bins: 6, col:['red','red', 'red', 'green', 'green', 'green']}],
+                     'hist(foo.xx, {cat: foo.tt, rescale:true, ui:{checkbox:"cat"}})' : [foo.xx, {cat: foo.tt, rescale:true, ui:{checkbox:"cat"}}],
                  };
 
                  var svgtmpl = '<div id="${id}" class="right_half"></div>';
