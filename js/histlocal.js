@@ -8,6 +8,7 @@ require(["order!thirdparty/jquery-1.5.min.js", "order!jscliplot"],
                  var fncalls = {
                      "hist(foo.xx)" : [foo.xx],
                      "hist(foo.xx, {bins:12})" : [foo.xx, {bins: 12}],
+                     "hist(foo.xx, {breaks:[0,2,4,5,6,8,10,12]})" : [foo.xx, {breaks:[0,2,4,5,6,8,10,12]}],
                  };
 
                  var svgtmpl = '<div id="${id}" class="right_half"></div>';

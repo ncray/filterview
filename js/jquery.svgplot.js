@@ -685,26 +685,27 @@
         },
         _createBins: function(min, max, num) {
             this._bins = [];
-            this._breaks = [];
-            var range = max - min, low, high;
-            var dd = Math.floor(Math.log(range)/Math.log(10));
-            var diff = range/num;
-            low = roundDigits(min, 2-dd, Math.floor);
-            high = roundDigits(min + diff, 2-dd);
-            this._breaks.push(low);
-            for (var i = 2; i <= num; i++) {
+            var range = max - min, br, dd, diff;
+            if (this._settings.breaks &&
+                this._settings.breaks.constructor == Array) {
+                this._breaks = this._settings.breaks;
+            } else {
+                this._breaks = [];
+                dd = Math.floor(Math.log(range)/Math.log(10));
+                diff = range/num;
+                this._breaks.push(roundDigits(min, 2-dd, Math.floor))
+                for (var i = 1; i < num; i++) {
+                    this._breaks.push(roundDigits(min+i*diff, 2-dd));
+                }
+                this._breaks.push(roundDigits(max, 2-dd, Math.ceil));
+            }
+            for (var i = 0; i < this._breaks.length-1; i++) {
                 this._bins.push({
-                    low: low,
-                    high: high,
+                    low: this._breaks[i],
+                    high: this._breaks[i+1],
                     count: 0,
                 });
-                low = high;
-                high = roundDigits(min+i*diff, 2-dd);
-                this._breaks.push(low);
             }
-            high = roundDigits(max, 2-dd, Math.ceil);
-            this._breaks.push(high);
-            this._bins.push({low: low, high: high, count: 0});
         },
         _dropIntoBuckets: function (datapts) {
             var xbound, numbins, binsize, lower;
