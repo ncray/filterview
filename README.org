@@ -36,7 +36,9 @@ Once you have these installed, you should ready to install FilterView.
 The easiest way to install FilterView is simply cloning the git repo. In the
 directory of your choosing, simply run from the commandline:
 
+#BEGIN_SRC sh
 git clone git://github.com/counsyl/filterview
+#END_SRC
 
 The latest, stable code will be on the master branch, and this is where you can test to
 see if installation went well. If you are allergic to git or too lazy to
@@ -47,7 +49,9 @@ the homepage of the FilterView site [[counsyl.github.com/filterview]].
 To make sure your version of FilterView is up and running, from the root
 directory execute the following command:
 
+#BEGIN_SRC sh
 node server.js unit/plotlocal.html
+#END_SRC
 
 If you don't receive any error messages, open up the address
 [[http://localhost:8000]] in your browser and see if all the plots load without
@@ -60,7 +64,9 @@ argument to the command above. If you want to get the example working with
 MongoDB, in a separate terminal or tab, execute the following from the root
 directory of the FilterView project:
 
+#BEGIN_SRC sh
 mongod --dbpath ./db --directoryperdb --port 27018
+#END_SRC
 
 The toy database is located in <filterview_root_dir>/db, and so the --dbpath
 flag in the above command tells MongoDB to use that directory as the data
@@ -68,9 +74,11 @@ for the database. We have also chosen to open the database on port 27018, as
 this is where server.js tries to connect to the MongoDB. If the above
 command throws no errors, execute the command
 
+#BEGIN_SRC sh
 node server.js unit/plotremote.html
+#END_SRC
 
-and open [[localhost:8000]] in your browser. If you see a series of plots, then
+and open [[http://localhost:8000]] in your browser. If you see a series of plots, then
 it's on and popping.
 
 * Contributing
