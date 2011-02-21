@@ -68,6 +68,5 @@ require(["order!thirdparty/js/jquery-1.4.4.min.js",
                             .next(".clear").remove();
                  }
                  e.preventDefault();
-                 debugger;
              });
          });
