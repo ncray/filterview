@@ -1,0 +1,79 @@
+* FilterView
+FilterView is a JavaScript package for visualizing large, distributed
+datasets in a interactive way. Extensive documentation and many examples can
+be found at [[counsyl.github.com/filterview]].
+
+* Dependencies
+Make sure that you have node.js installed. The code can be downloaded and
+found at [[nodejs.org/]]. The current release has been tested on node
+v0.2.5 and greater, but we highly recommend using the latest release
+(currently v0.4.0).
+
+We also recommend you use npm to install all the node packages. The
+documentation and instructions for downloading npm can be found at
+[[npmjs.org]].
+
+As for connecting to a database, currently we are only supporting MongoDB.
+You don't need to install this if you only want to only run local examples,
+but if you want to see the power of hooking into a database then you'll need
+to install MongoDB. You can install this with Macports, Homebrew, or
+whatever package manager the kids are using these days; just make sure you
+have a recent version of Mongo (v1.6.5 and up). The biggest reason for this
+is occasionally we demand exclusion of the ID field with certain queries,
+and only the newest versions of Mongo allow this. We have included a toy
+data set in this repo, so all you need to do is make sure MongoDB is
+installed and in your path.
+
+Finally, using npm, make sure you install the following packages with npm:
+
++ express v1.0.1 and greater
++ node-static v0.5.3 and greater
++ mongodb v0.7.9
+
+Once you have these installed, you should ready to install FilterView.
+
+* Installation
+The easiest way to install FilterView is simply cloning the git repo. In the
+directory of your choosing, simply run from the commandline:
+
+git clone git://github.com/counsyl/filterview
+
+The latest, stable code will be on the master branch, and this is where you can test to
+see if installation went well. If you are allergic to git or too lazy to
+switch to it (please I hope not), you can download the latest tarball from
+the homepage of the FilterView site [[counsyl.github.com/filterview]].
+
+* Unit Tests
+To make sure your version of FilterView is up and running, from the root
+directory execute the following command:
+
+node server.js unit/plotlocal.html
+
+If you don't receive any error messages, open up the address
+[[http://localhost:8000]] in your browser and see if all the plots load without
+errors. If something goes wrong, check either Firebug or the Chrome Debugger
+Extensions for some feedback. Any errors you find we'd love to hear about,
+so contact us.
+
+To test the other unit tests, simply pass in the other .html files in as the
+argument to the command above. If you want to get the example working with
+MongoDB, in a separate terminal or tab, execute the following from the root
+directory of the FilterView project:
+
+mongod --dbpath ./db --directoryperdb --port 27018
+
+The toy database is located in <filterview_root_dir>/db, and so the --dbpath
+flag in the above command tells MongoDB to use that directory as the data
+for the database. We have also chosen to open the database on port 27018, as
+this is where server.js tries to connect to the MongoDB. If the above
+command throws no errors, execute the command
+
+node server.js unit/plotremote.html
+
+and open [[localhost:8000]] in your browser. If you see a series of plots, then
+it's on and popping.
+
+* Contributing
+We'd love to get more people involved, and so if you're interested let us
+know. The code most integral to the project has commented versions up on the
+FilterView site, so feel free to check those out if you'd like to contribute.
