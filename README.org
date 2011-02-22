@@ -5,15 +5,14 @@ be found at [[http://counsyl.github.com/filterview]].
 
 * Dependencies
 Make sure that you have node.js installed. The code can be downloaded and
-found at [[http://nodejs.org][the node.js site]]. The current release has been tested on node
+found at nodejs.org. The current release has been tested on node
 v0.2.5 and greater, but we highly recommend using the latest release
 (currently v0.4.0).
 
 We also recommend you use npm to install all the node packages. The
-documentation and instructions for downloading npm can be found at
-[[http://npmjs.org][the npm homepage]].
+documentation and instructions for downloading npm can be found at npmjs.org.
 
-As for connecting to a database, currently we are only supporting [[http://www.mongodb.org/][MongoDB]].
+As for connecting to a database, currently we are only supporting MongoDB.
 You don't need to install this if you only want to only run local examples,
 but if you want to see the power of hooking into a database then you'll need
 to install MongoDB. You can install this with Macports, Homebrew, or
@@ -50,7 +49,7 @@ directory execute the following command:
    : node server.js unit/plotlocal.html
 
 If you don't receive any error messages, open up the address
-[[http://localhost:8000]] in your browser and see if all the plots load without
+localhost:8000 in your browser and see if all the plots load without
 errors. If something goes wrong, check either Firebug or the Chrome Debugger
 Extensions for some feedback. Any errors you find we'd love to hear about,
 so contact us.
@@ -70,7 +69,7 @@ command throws no errors, execute the command
 
    : node server.js unit/plotremote.html
 
-and open [[http://localhost:8000]] in your browser. If you see a series of plots, then
+and open localhost:8000 in your browser. If you see a series of plots, then
 it's on and popping.
 
 * Contributing
