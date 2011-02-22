@@ -5,7 +5,7 @@ be found at [[counsyl.github.com/filterview]].
 
 * Dependencies
 Make sure that you have node.js installed. The code can be downloaded and
-found at [[nodejs.org/]]. The current release has been tested on node
+found at [[nodejs.org]]. The current release has been tested on node
 v0.2.5 and greater, but we highly recommend using the latest release
 (currently v0.4.0).
 
@@ -13,14 +13,14 @@ We also recommend you use npm to install all the node packages. The
 documentation and instructions for downloading npm can be found at
 [[npmjs.org]].
 
-As for connecting to a database, currently we are only supporting MongoDB.
+As for connecting to a database, currently we are only supporting [[http://www.mongodb.org/][MongoDB]].
 You don't need to install this if you only want to only run local examples,
 but if you want to see the power of hooking into a database then you'll need
 to install MongoDB. You can install this with Macports, Homebrew, or
 whatever package manager the kids are using these days; just make sure you
-have a recent version of Mongo (v1.6.5 and up). The biggest reason for this
+have a recent version of MongoDB (v1.6.5 and up). The biggest reason for this
 is occasionally we demand exclusion of the ID field with certain queries,
-and only the newest versions of Mongo allow this. We have included a toy
+and only the newest versions of MongoDB allow this. We have included a toy
 data set in this repo, so all you need to do is make sure MongoDB is
 installed and in your path.
 
@@ -28,7 +28,7 @@ Finally, using npm, make sure you install the following packages with npm:
 
 + express v1.0.1 and greater
 + node-static v0.5.3 and greater
-+ mongodb v0.7.9
++ mongodb v0.7.9 (a node.js api for MongoDB)
 
 Once you have these installed, you should ready to install FilterView.
 
