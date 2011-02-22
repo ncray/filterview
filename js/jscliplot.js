@@ -2,12 +2,29 @@
 // Author(s): Jackson Gorham
 // Email: jacksongorham@gmail.com
 
-define(["order!thirdparty/jquery.tmpl.js",
+define(["order!thirdparty/modernizr-1.7.min.js",
+        "order!thirdparty/jquery.tmpl.js",
         "order!thirdparty/development-bundle/ui/jquery-ui-1.8.7.custom.js",
         "order!thirdparty/jquery.svg.js",
         "order!js/jquery.svgplot.js"], function() {
     // Store svgplot references
-    var svgplot, uidiv, _template;
+    var svgplot, uidiv, _template, _supportsSVG;
+
+    // Make sure browser supports SVG
+    function verifySVG(svg_id) {
+        _supportsSVG = Modernizr.svg;
+        if (!Modernizr.svg) {
+            $("<div><h2>Sorry, your browser doesn't support SVG.</h2><p>Please try using the latest Chrome or Firefox 4 beta.</p></div>").appendTo(svg_id);
+        }
+    }
+
+    // Some browsers don't support Object.keys, so
+    // I'll implement this here.
+    if (!Object.keys) Object.keys = function(o){
+        var ret=[], p;
+        for (p in o) if (Object.prototype.hasOwnProperty.call(o,p)) ret.push(p);
+        return ret;
+    }
 
     // Try to parse any argument thats a string
     function evalArg(arg) {
@@ -79,7 +96,7 @@ define(["order!thirdparty/jquery.tmpl.js",
     // Zip the data up the data now it is all locally stored
     // @params
     // Object args -> raw data to be plotted
-    // Ojbect opts -> the options object
+    // Object opts -> the options object
     // @return Object
     // The data to be loaded into jquery.svgplot
     function zipLocalData(args, opts) {
@@ -170,12 +187,19 @@ define(["order!thirdparty/jquery.tmpl.js",
         // Must be called before plot, in order to attach the svgplot
         // and ui elements to some divs on the page.
         createSVGPlot: function (svg_id, ui_id) {
-            $(svg_id).svg();
-            svgplot = $(svg_id).svg('get');
-            uidiv = ui_id;
+            verifySVG(svg_id);
+            if (_supportsSVG) {
+                $(svg_id).svg();
+                svgplot = $(svg_id).svg('get');
+                uidiv = ui_id;
+            }
         },
         // The R-like plot function
         plot: function () {
+            if (!_supportsSVG) {
+                if (_supportsSVG === undefined) console.log("Need to attach with createSVGPlot before plotting.");
+                return;
+            }
             var xx, yy, opts, data, args = Array.prototype.slice.call(arguments);
             svgplot.plot._slavecont = uidiv;
             if (_template) {
@@ -220,6 +244,10 @@ define(["order!thirdparty/jquery.tmpl.js",
             }
         },
         hist: function () {
+            if (!_supportsSVG) {
+                if (_supportsSVG === undefined) console.log("Need to attach with createSVGPlot before plotting.");
+                return;
+            }
             var xx, opts, data, args = Array.prototype.slice.call(arguments);
             if (!args.length) return;
             svgplot.hist._slavecont = uidiv;
@@ -228,7 +256,7 @@ define(["order!thirdparty/jquery.tmpl.js",
                 _template = null;
             }
             xx = args[0];
-            opts = (args[1].constructor == Object) ? $.extend(true, {}, args[1]) : {};
+            opts = (args[1] && args[1].constructor == Object) ? $.extend(true, {}, args[1]) : {};
             data = zipParams({xx:xx}, opts);
             (!data) || svgplot.hist.loadData(data);
         },
