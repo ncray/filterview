@@ -2,11 +2,11 @@
 // jquery.svggraph.js extensions designed by Keith
 // Wood, who also designed the jquery.svg.js package
 // as a whole.
-// Authors: Jackson Gorham
+// Author(s): Jackson Gorham
 // Date: February 10, 2011
 
 (function($, undefined) {
-    /* hook to plug this into jquery svg */
+    // hook to plug this into jquery svg
     $.svg.addExtension('plot', SVGScatterPlot);
     $.svg.addExtension('hist', SVGHistogram);
 
@@ -18,7 +18,7 @@
         // Plot title parameters
 	this._title = {value: '', offset: 25, settings: {textAnchor: 'middle'}};
         // The chart area: left, top, right, bottom, > 1 in pixels, <= 1 as proportion
-        this._area = [0.15, 0.025, 0.95, 0.925];
+        this._area = [0.15, 0.1, 0.95, 0.9];
         // The formatting for the plot area
 	this._areaFormat = {fill: 'none', stroke: 'black'};
         // The formatting of the x- and y-gridlines
@@ -42,22 +42,25 @@
     };
 
     $.extend(SVGPlotCore.prototype, {
-	/* Useful indexes. */
+	// Useful indexes.
 	X: 0, Y: 1, W: 2, H: 3,
         L: 0, T: 1, R: 2, B: 3,
 
-	/* Decode an attribute value.
-	   @param  node  the node to examine
-	   @param  name  the attribute name
-	   @return  the actual value */
+	// Decode an attribute value.
+	// @params
+        // SVGNode node -> the node to examine
+	// string name  -> the attribute name
+	// @return  the actual value
 	_getValue: function(node, name) {
 	    return (!node[name] ? parseInt(node.getAttribute(name), 10) :
 		    (node[name].baseVal ? node[name].baseVal.value : node[name]));
 	},
 
-	/* Calculate the actual dimensions of the plot area.
-	   @param  area  (number[4]) the area values to evaluate (optional)
-	   @return  (number[4]) an array of dimension values: left, top, width, height */
+	// Calculate the actual dimensions of the plot area.
+	// @param
+        // Array area -> the area values to evaluate (optional)
+	// @return (number[4])
+        // An array of dimension values: left, top, width, height
 	_getDims: function(area) {
 	    var otherArea = (area != null);
 	    area = area || this._area;
@@ -70,18 +73,20 @@
 	    return [left, top, width, height];
 	},
 
-	/* Calculate the scaling factors for the plot area.
-	   @return  (number[2]) the x- and y-scaling factors */
+	// Calculate the scaling factors for the plot area.
+        // @params -> none
+	// @return number[2] -> the x- and y-scaling factors
 	_getScales: function() {
 	    var dims = this._getDims();
 	    return [dims[this.W] / (this.xAxis._scale.max - this.xAxis._scale.min),
 		    dims[this.H] / (this.yAxis._scale.max - this.yAxis._scale.min)];
 	},
 
-        /* Given some x and y coordinates (relative to axes)
-           it returns the svg coordinates.
-           @param x, y the coordinates relative to x and y units
-           @return either the array of respective coords or the single coord */
+        // Given some x and y coordinates (relative to axes)
+        // it returns the svg coordinates.
+        // @params
+        // x, y the coordinates relative to x and y units
+        // @return either the array of respective coords or the single coord */
         _getSVGCoords: function(x, y) {
             if (arguments.length == 0) return;
             var dims = this._getDims();
@@ -94,10 +99,11 @@
             return (xco ? xco : yco);
         },
 
-        /* Exact inverse of _getSVGCoords. Converts SVG coordinates into
-           coordinates relative to axes units.
-           @params x,y the SVG coordinates to be converted to units
-           @return either the single coord or array depending on arguments */
+        // Exact inverse of _getSVGCoords. Converts SVG coordinates into
+        // coordinates relative to axes units.
+        // @params
+        // x,y the SVG coordinates to be converted to units
+        // @return either the single coord or array depending on arguments
         _getPlotCoords: function(x, y) {
             if (arguments.length == 0) return;
             var dims = this._getDims();
@@ -110,14 +116,15 @@
             return (xco ? xco : yco);
         },
 
-	/* Set or retrieve the main plotting area.
-	   @param  left    (number) > 1 is pixels, <= 1 is proportion of width or
-	   (number[4]) for left, top, right, bottom
-	   @param  top     (number) > 1 is pixels, <= 1 is proportion of height
-	   @param  right   (number) > 1 is pixels, <= 1 is proportion of width
-	   @param  bottom  (number) > 1 is pixels, <= 1 is proportion of height
-	   @return  (SVGPlot) this plot object or
-	   (number[4]) the plotting area: left, top, right, bottom (if no parameters) */
+	// Set or retrieve the main plotting area.
+        // @params
+	// left    (number) -> > 1 is pixels, <= 1 is proportion of width or
+	// top     (number) -> > 1 is pixels, <= 1 is proportion of height
+	// right   (number) -> > 1 is pixels, <= 1 is proportion of width
+	// bottom  (number) -> > 1 is pixels, <= 1 is proportion of height
+	// @return  (SVGPlot)
+        // this plot object or (number[4]) the plotting area:
+        // left, top, right, bottom (if no parameters)
 	area: function(left, top, right, bottom) {
 	    if (arguments.length == 0) {
 		return this._area;
@@ -128,12 +135,13 @@
 	    return this;
 	},
 
-	/* Set or retrieve the background of the plot area.
-	   @param  fill      (string) how to fill the area background
-	   @param  stroke    (string) the colour of the outline (optional)
-	   @param  settings  (object) additional formatting for the area background (optional)
-	   @return  (SVGPlot) this plot object or
-	   (object) the area format (if no parameters) */
+	// Set or retrieve the background of the plot area.
+	// @params
+        // fill   (string) how to fill the area background
+	// @param  stroke    (string) the colour of the outline (optional)
+	// @param  settings  (object) additional formatting for the area background (optional)
+	// @return  (SVGPlot) this plot object or
+	// (object) the area format (if no parameters)
 	format: function(fill, stroke, settings) {
 	    if (arguments.length == 0) {
 		return this._areaFormat;
@@ -428,8 +436,8 @@
             this._uis = [];
             this._autorescale = false;
             this._drawNow = false;
-            this.xAxis.title("X", 40);
-            this.yAxis.title("Y", 40);
+            this.xAxis.title("", 40);
+            this.yAxis.title("", 40);
             this._drawNow = true;
             return this;
         },
@@ -651,9 +659,9 @@
         /* Construct Axes */
         this._drawNow = false;
 	this.xAxis = new SVGPlotAxis(this); // The main x-axis
-	this.xAxis.title('X', 40);
+	this.xAxis.title('', 40);
 	this.yAxis = new SVGPlotAxis(this); // The main y-axis
-	this.yAxis.title('Y', 40);
+	this.yAxis.title('', 40);
 	this._drawNow = true;
     };
 
@@ -762,6 +770,7 @@
                 }
             }
             if (typeof this._settings.col == 'string') {
+
                 this._bins.forEach(function(bin) {
                     bin.col = this._settings.col;
                 }, this);
@@ -1231,8 +1240,8 @@
             },
             draw: function () {
                 var self = this,
-                    onevaltemp = '<div class="${_class}"><label>${_lattr}: </label><input/></div>',
-                    twovaltemp = '<div class="${_class}"><label>${_lattr}: From</label><input/><label> To</label><input/></div>';
+                    onevaltemp = '<div class="${_class}"><label>${_lattr}: </label><input type="text"/></div>',
+                    twovaltemp = '<div class="${_class}"><label>${_lattr}: From</label><input type="text"/><label> To</label><input type="text"/></div>';
 
                 if (this._params.values) {
                     $.tmpl(twovaltemp, this).appendTo(this._slavecont);

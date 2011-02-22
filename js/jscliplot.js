@@ -1,12 +1,15 @@
 // Definition of the plotting package for the jscli.
-// Authors: Jackson Gorham
+// Author(s): Jackson Gorham
 // Email: jacksongorham@gmail.com
 
-define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/ui/jquery-ui-1.8.7.custom.js", "order!thirdparty/jquery.svg.js", "order!js/jquery.svgplot.js"], function() {
-    /* Store svgplot reference */
+define(["order!thirdparty/jquery.tmpl.js",
+        "order!thirdparty/development-bundle/ui/jquery-ui-1.8.7.custom.js",
+        "order!thirdparty/jquery.svg.js",
+        "order!js/jquery.svgplot.js"], function() {
+    // Store svgplot references
     var svgplot, uidiv, _template;
 
-    /* Try to parse any argument thats a string */
+    // Try to parse any argument thats a string
     function evalArg(arg) {
         if (typeof arg !== 'string') {
             return (arg || null);
@@ -17,7 +20,7 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
         return arg;
     };
 
-    /* Get a non null value from object */
+    // Get a non null value from object
     function nonNullArg(args) {
         var nonNull = null;
         for (var arg in args) {
@@ -26,11 +29,12 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
         return nonNull;
     };
 
-    /* Determine if the obj passed in is in fact an instance
-       of RemateData and a reference data stored at some url
-       @param obj - the object
-       @return (boolean) true if and only if is reference data stored
-               at some url */
+    // Determine if the obj passed in is in fact an instance
+    // of RemateData and a reference data stored at some url
+    // @params
+    // Object obj -> the object that is tested to contain an Ajax Remote elem
+    // @return -> Boolean
+    // true if and only if it references data stored at some url
     function isAjaxRemote (obj) {
         if (!obj || (typeof obj != "object") || (obj.constructor == Array)) {
             return false;
@@ -38,14 +42,16 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
         return !!(obj.url);
     };
 
-    /* Depending on whether the data is all present as an array,
-       a mixture of present and url references, or held remotely
-       on a server, this zips all the data up from a list of lists
-       into a cluster of points to be sent to the loadData function
-       in the SVGPlot object.
-       @param args - the args passed in not part of the options
-       @param opts - the user's options
-       @return the zipped up data (or none if we must make jsonp calls) */
+    // Depending on whether the data is all present as an array,
+    // a mixture of present and url references, or held remotely
+    // on a server, this zips all the data up from a list of lists
+    // into a cluster of points to be sent to the loadData function
+    // in the SVGPlot object.
+    // @params
+    // Object args -> the args passed in not part of the options
+    // Object opts -> the user's options
+    // @return (null or Object)
+    // the zipped up data (or none if we must make jsonp calls)
     function zipParams (args, opts) {
         var nonNull = nonNullArg(args);
         var data = $.extend(true, {}, opts, args);
@@ -70,7 +76,12 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
         return zipLocalData(args, opts);
     };
 
-    /* Zip the data up if all held locally */
+    // Zip the data up the data now it is all locally stored
+    // @params
+    // Object args -> raw data to be plotted
+    // Ojbect opts -> the options object
+    // @return Object
+    // The data to be loaded into jquery.svgplot
     function zipLocalData(args, opts) {
         var nonNull = nonNullArg(args), point_params, local;
         point_params = Object.keys(opts).filter(function(key) {
@@ -96,8 +107,12 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
         return $.extend(opts, {local: local});
     };
 
-    /* Zip the data up as best as possible when it refers
-       to data held on the server in a database */
+    // Zip the data up as best as possible when it refers
+    // to data held on the server in a database
+    // @params
+    // Object kwargs -> object containing all remote references to data
+    // @return Object
+    // Object with all pointwise data "zipped" together in remote's value
     function zipRemoteData(kwargs) {
         var remote = {};
         for (var kw in kwargs) {
@@ -111,8 +126,12 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
         return $.extend({remote:remote}, kwargs);
     };
 
-    /* function called recursively to load data that needs
-       to be pulled in from jsonp requests. */
+    // Function called recursively to load data that needs
+    // to be pulled in from jsonp requests.
+    // @params
+    // Object data -> all data to be loaded for svgplot
+    // Array argnames -> the argument names of main data
+    // @return none
     function loadAjaxData(data, argnames) {
         var url, attrs = [];
         for (var attr in data) {
@@ -144,17 +163,18 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
         svgplot.plot.loadData(zipLocalData(args, data));
     };
 
-    /* The jscliplot object that is the gateway for the user
-       to actually invoke calls in the R-like syntax */
+    // The jscliplot object that is the gateway for the user
+    // to actually invoke calls in the R-like syntax. We use
+    // closure to hide the above functions from user.
     return {
-        /* Must be called before plot, in order to attach the svgplot
-           and ui elements to some divs on the page */
+        // Must be called before plot, in order to attach the svgplot
+        // and ui elements to some divs on the page.
         createSVGPlot: function (svg_id, ui_id) {
             $(svg_id).svg();
             svgplot = $(svg_id).svg('get');
             uidiv = ui_id;
         },
-        /* The R like plot function */
+        // The R-like plot function
         plot: function () {
             var xx, yy, opts, data, args = Array.prototype.slice.call(arguments);
             svgplot.plot._slavecont = uidiv;
@@ -193,26 +213,26 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
                 opts[opt] = evalArg(opts[opt]);
             }
             data = zipParams({xx:xx, yy:yy}, opts);
-            // if we need to load data via ajax, this
-            // will be null. Otherwise its good to plot.
+            // If we need to load data via ajax, this
+            // will be null; otherwise its good to plot.
             if (data) {
                 svgplot.plot.loadData(data);
             }
         },
         hist: function () {
-            var xx, opts, data;
-            if (!arguments.length) return;
+            var xx, opts, data, args = Array.prototype.slice.call(arguments);
+            if (!args.length) return;
             svgplot.hist._slavecont = uidiv;
             if (_template) {
                 svgplot.hist.template(_template);
                 _template = null;
             }
-            xx = arguments[0];
-            opts = (arguments[1] || {});
+            xx = args[0];
+            opts = (args[1].constructor == Object) ? $.extend(true, {}, args[1]) : {};
             data = zipParams({xx:xx}, opts);
             (!data) || svgplot.hist.loadData(data);
         },
-        /* Used to set the template of the SVGPlot object */
+        // Used to set the template of the SVGPlotCore object
         template: function(temp) {
             _template = temp;
         },
