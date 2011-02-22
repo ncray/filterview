@@ -1,17 +1,17 @@
 * FilterView
 FilterView is a JavaScript package for visualizing large, distributed
 datasets in a interactive way. Extensive documentation and many examples can
-be found at [[counsyl.github.com/filterview]].
+be found at [[http://counsyl.github.com/filterview]].
 
 * Dependencies
 Make sure that you have node.js installed. The code can be downloaded and
-found at [[nodejs.org]]. The current release has been tested on node
+found at [[http://nodejs.org][the node.js site]]. The current release has been tested on node
 v0.2.5 and greater, but we highly recommend using the latest release
 (currently v0.4.0).
 
 We also recommend you use npm to install all the node packages. The
 documentation and instructions for downloading npm can be found at
-[[npmjs.org]].
+[[http://npmjs.org][the npm homepage]].
 
 As for connecting to a database, currently we are only supporting [[http://www.mongodb.org/][MongoDB]].
 You don't need to install this if you only want to only run local examples,
@@ -41,7 +41,7 @@ directory of your choosing, simply run from the commandline:
 The latest, stable code will be on the master branch, and this is where you can test to
 see if installation went well. If you are allergic to git or too lazy to
 switch to it (please I hope not), you can download the latest tarball from
-the homepage of the FilterView site [[counsyl.github.com/filterview]].
+the homepage of the [[http://counsyl.github.com/filterview][FilterView site]].
 
 * Unit Tests
 To make sure your version of FilterView is up and running, from the root
