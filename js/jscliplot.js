@@ -144,8 +144,8 @@ define(["order!thirdparty/jquery.tmpl.js",
         }
         if (url) {
             $.ajax({
-                url: url,
-                dataType: "jsonp",
+                url: url+"&callback=?",
+                dataType: "json",
                 success: function (json) {
                     attrs.forEach(function(attr) {
                         data[attr] = data[attr].callback(json);
