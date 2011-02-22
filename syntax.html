@@ -191,8 +191,8 @@
           name of drawCLs. This function will draw confidence bands on the
           plot which are two standard deviations from the selected y
           coordinates. The code written for this function is given below</p>
-      </div>
-      <div>
+        </div>
+        <div>
         <pre class="Rstyle">var drawCLs = function (datapts) {
     if (!datapts.length) return;
     var yys = datapts.map(function(pt) {return pt.yy});
@@ -227,8 +227,31 @@
         }
     }
 };</pre>
-      </div>
+        </div>
+        <div>
+          <h2>Histogram plots</h2>
+          <p>While we have been extensively focused on scatter plots, any type
+            of plot is possible. Using the syntax similiar to the R command
+            hist, we can create interactive histograms as well.</p>
+        </div>
+        <div>
+          <h3>An example using hist</h3>
+          <pre class="Rstyle">hist(foo.xx, {
+    tt:foo.tt,
+    yy:foo.yy,
+    ui:{
+        checkbox:"tt",
+        slider: "yy",
+    },
+})</pre>
+          <div class="show" num="9"><a href="#">Show</a></div>
+          <p>Much like the plot command, you need only pass the data as the
+            first argument and any other options as the second. Everything else
+            is exactly the same, except for the type of options that are
+            possible with a histogram.</p>
+        </div>
       <div class="footer"/>
+      </div>
     </div>
   </body>
 </html>

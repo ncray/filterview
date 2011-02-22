@@ -200,15 +200,15 @@ define(["order!thirdparty/jquery.tmpl.js", "order!thirdparty/development-bundle/
             }
         },
         hist: function () {
-            var xx, opts, data;
-            if (!arguments.length) return;
+            var xx, opts, data, args = Array.prototype.slice.call(arguments);
+            if (!args.length) return;
             svgplot.hist._slavecont = uidiv;
             if (_template) {
                 svgplot.hist.template(_template);
                 _template = null;
             }
-            xx = arguments[0];
-            opts = (arguments[1] || {});
+            xx = args[0];
+            opts = (args[1].constructor == Object) ? $.extend(true, {}, args[1]) : {};
             data = zipParams({xx:xx}, opts);
             (!data) || svgplot.hist.loadData(data);
         },

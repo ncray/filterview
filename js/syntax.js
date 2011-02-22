@@ -33,20 +33,22 @@ require(["order!thirdparty/js/jquery-1.4.4.min.js",
                      }
                  }
              };
-             var fncalls = [
-                 [foo.xx],
-                 [foo.xx, foo.yy],
-                 [foo.xx, foo.yy, {col:foo.col}],
-                 [foo.xx, foo.yy, {col:foo.col, bar:foo.tt, ui:{slider:"bar"}}],
-                 [foo.xx, foo.yy, {col:foo.col, tt:foo.tt, ui:{checkbox:"tt", autocomplete:"col"}}],
-                 [foo.xx, foo.yy, {col:foo.col, ui:{slider:["xx","yy"]}}],
-                 [foo.xx, foo.yy, {col:foo.col, rescale:true, ui:{regexp:"col"}}],
-                 [foo.xx, foo.yy, {col:foo.col, ui:{slider:"xx"}, cui:{checkbox:"col"}}],
-                 [foo.yy, {col:foo.col, type:"o", postFns:[drawCLs], ui: {checkbox: "col"}}]
+             var plotfncalls = [
+                 ["plot", foo.xx],
+                 ["plot", foo.xx, foo.yy],
+                 ["plot", foo.xx, foo.yy, {col:foo.col}],
+                 ["plot", foo.xx, foo.yy, {col:foo.col, bar:foo.tt, ui:{slider:"bar"}}],
+                 ["plot", foo.xx, foo.yy, {col:foo.col, tt:foo.tt, ui:{checkbox:"tt", autocomplete:"col"}}],
+                 ["plot", foo.xx, foo.yy, {col:foo.col, ui:{slider:["xx","yy"]}}],
+                 ["plot", foo.xx, foo.yy, {col:foo.col, rescale:true, ui:{regexp:"col"}}],
+                 ["plot", foo.xx, foo.yy, {col:foo.col, ui:{slider:"xx"}, cui:{checkbox:"col"}}],
+                 ["plot", foo.yy, {col:foo.col, type:"o", postFns:[drawCLs], ui: {checkbox: "col"}}],
+                 ["hist", foo.xx, {tt:foo.tt, yy:foo.yy, rescale: true, ui:{checkbox:"tt", slider:"yy"}}],
              ];
              $(".show").click(function(e) {
                  var wasEmpty = ($(this).children(":first-child").text() == "Show");
                  var num = $(this).attr("num");
+                 var cmd = plotfncalls[num][0];
                  var ids = {
                      contid: "cont"+num,
                      svgid: "svg"+num,
@@ -59,7 +61,7 @@ require(["order!thirdparty/js/jquery-1.4.4.min.js",
                      $.tmpl(exmpl, ids).insertAfter($(this).parent());
                      $("#"+ids.svgid).css("height", $("#"+ids.svgid).css("width"));
                      jscliplot.createSVGPlot("#"+ids.svgid, "#"+ids.uiid);
-                     jscliplot.plot.apply(jscliplot, fncalls[num]);
+                     jscliplot[cmd].apply(jscliplot, plotfncalls[num].slice(1));
                  } else {
                      $(this).children(":first-child").text("Show");
                      $('#'+ids.svgid).svg("destroy");
