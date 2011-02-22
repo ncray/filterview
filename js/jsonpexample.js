@@ -1,4 +1,4 @@
-require(["order!thirdparty/js/jquery-1.4.4.min.js",
+require(["order!thirdparty/jquery-1.5.min.js",
          "order!js/toc.js",
          "order!jscliplot"], function (_, _, jscliplot) {
              var colors = ["red", "blue", "pink", "orange", "yellow", "purple", "green", "black"];
