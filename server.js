@@ -68,7 +68,7 @@ Function.prototype.partial = function () {
 // Create app server //
 ///////////////////////
 app = express.createServer(
-    express.bodyDecoder()
+    express.bodyParser()
 );
 
 // Cache webapp's html
